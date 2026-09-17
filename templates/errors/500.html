@@ -1,0 +1,21 @@
+{% extends "errors/base_error.html" %}
+
+{% block title %}Server error · IMS{% endblock %}
+{% block error_code %}500{% endblock %}
+{% block error_title %}Something went wrong{% endblock %}
+{% block error_message %}
+  An unexpected error occurred. Please retry, and contact your administrator
+  if the problem persists.
+{% endblock %}
+{% block error_actions %}
+  <a
+    href=""
+    class="inline-flex h-11 items-center rounded-xl bg-primary px-lg text-small font-medium text-white transition-colors duration-150 hover:bg-primary-hover"
+    >Retry</a
+  >
+  <a
+    href="/"
+    class="inline-flex h-11 items-center rounded-xl border border-border px-lg text-small font-medium text-text-primary transition-colors duration-150 hover:bg-background dark:border-dark-border dark:text-dark-text dark:hover:bg-dark-background"
+    >Back to Dashboard</a
+  >
+{% endblock %}

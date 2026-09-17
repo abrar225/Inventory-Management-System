@@ -1,0 +1,16 @@
+# Development & testing dependencies.
+-r base.txt
+
+# Testing
+pytest==8.*
+pytest-django==4.*
+coverage==7.*
+factory-boy==3.*
+Faker==37.*
+
+# Code quality
+black==25.*
+ruff==0.14.*
+mypy==1.*
+django-stubs==5.*
+pre-commit==4.*

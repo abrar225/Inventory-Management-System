@@ -1,0 +1,14 @@
+# Core runtime dependencies (all environments).
+# Pinned to compatible release ranges; resolved versions are locked at install
+# time. Versions target Django 5.2 LTS on Python 3.13.
+
+Django==5.2.*
+psycopg[binary]==3.2.*
+django-environ==0.12.*
+Pillow==11.*
+whitenoise==6.*
+django-filter==25.*
+python-slugify==8.*
+openpyxl==3.1.*
+reportlab==4.*
+django-import-export==4.*

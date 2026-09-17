@@ -1,0 +1,276 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Inventory Dashboard — IMS{% endblock %}
+
+{% block breadcrumb %}
+  <nav class="mb-sm text-caption text-text-secondary dark:text-dark-text" aria-label="Breadcrumb">
+    <ol class="inline-flex list-none p-0">
+      <li class="flex items-center">
+        <a href="{% url 'dashboard:index' %}" class="hover:text-primary">Dashboard</a>
+        <span class="mx-xs font-semibold">/</span>
+      </li>
+      <li class="text-text-primary dark:text-dark-text font-medium" aria-current="page">Inventory</li>
+    </ol>
+  </nav>
+{% endblock %}
+
+{% block content %}
+  {# Header block #}
+  <div class="mb-lg flex flex-col justify-between gap-md sm:flex-row sm:items-center">
+    <div>
+      <h1 class="text-h3 font-bold tracking-tight text-text-primary dark:text-dark-text">Inventory Dashboard</h1>
+      <p class="text-small text-text-secondary">Monitor current stock levels, low-stock warnings, total value, and adjust ledger counts.</p>
+    </div>
+    <div class="flex gap-sm">
+      {% if "inventory.view_stockmovement" in perms %}
+        <a
+          href="{% url 'inventory:movement_list' %}"
+          class="inline-flex h-[44px] items-center justify-center rounded-xl border border-border bg-surface px-lg text-small font-semibold text-text-primary transition-colors hover:bg-background dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background"
+        >
+          View Stock Ledger
+        </a>
+      {% endif %}
+      {% if "inventory.add_stockadjustment" in perms %}
+        <a
+          href="{% url 'inventory:adjust_stock' %}"
+          class="inline-flex h-[44px] items-center justify-center rounded-xl bg-primary px-lg text-small font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/30"
+        >
+          Adjust Stock
+        </a>
+      {% endif %}
+    </div>
+  </div>
+
+  {# KPI Cards Grid #}
+  <div class="mb-lg grid gap-md sm:grid-cols-2 lg:grid-cols-4">
+    {# Total Value Card #}
+    <div class="rounded-[20px] border border-border bg-surface p-lg shadow-card dark:border-dark-border dark:bg-dark-surface">
+      <div class="flex items-center justify-between">
+        <span class="text-caption font-semibold uppercase tracking-wider text-text-secondary">Inventory Value</span>
+        <span class="text-lg">💰</span>
+      </div>
+      <div class="mt-sm">
+        <span class="text-h3 font-bold text-text-primary dark:text-dark-text">₹{{ total_value|floatformat:2 }}</span>
+      </div>
+    </div>
+
+    {# Total Products Card #}
+    <div class="rounded-[20px] border border-border bg-surface p-lg shadow-card dark:border-dark-border dark:bg-dark-surface">
+      <div class="flex items-center justify-between">
+        <span class="text-caption font-semibold uppercase tracking-wider text-text-secondary">Total Products</span>
+        <span class="text-lg">📦</span>
+      </div>
+      <div class="mt-sm">
+        <span class="text-h3 font-bold text-text-primary dark:text-dark-text">{{ total_products }}</span>
+      </div>
+    </div>
+
+    {# Low Stock Warning Card #}
+    <div class="rounded-[20px] border border-border bg-surface p-lg shadow-card dark:border-dark-border dark:bg-dark-surface">
+      <div class="flex items-center justify-between">
+        <span class="text-caption font-semibold uppercase tracking-wider text-text-secondary">Low Stock Warnings</span>
+        <span class="text-lg">⚠️</span>
+      </div>
+      <div class="mt-sm">
+        <span class="text-h3 font-bold {% if low_stock_count > 0 %}text-warning{% else %}text-text-primary dark:text-dark-text{% endif %}">
+          {{ low_stock_count }}
+        </span>
+      </div>
+    </div>
+
+    {# Out of Stock Card #}
+    <div class="rounded-[20px] border border-border bg-surface p-lg shadow-card dark:border-dark-border dark:bg-dark-surface">
+      <div class="flex items-center justify-between">
+        <span class="text-caption font-semibold uppercase tracking-wider text-text-secondary">Out of Stock</span>
+        <span class="text-lg">🚨</span>
+      </div>
+      <div class="mt-sm">
+        <span class="text-h3 font-bold {% if out_of_stock_count > 0 %}text-danger{% else %}text-text-primary dark:text-dark-text{% endif %}">
+          {{ out_of_stock_count }}
+        </span>
+      </div>
+    </div>
+  </div>
+
+  {# Search and Filters #}
+  <div class="mb-md rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+    <form method="get" action="{% url 'inventory:dashboard' %}" class="flex flex-col gap-md">
+      <div class="flex flex-col gap-sm md:flex-row">
+        {# Search Input #}
+        <div class="relative flex-1">
+          <input
+            type="search"
+            name="q"
+            value="{{ q }}"
+            placeholder="Search products by name, SKU, or barcode..."
+            class="h-11 w-full rounded-xl border border-border bg-background pl-[44px] pr-md text-small text-text-primary placeholder:text-text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-dark-border dark:bg-dark-background dark:text-dark-text"
+          />
+          <div class="pointer-events-none absolute inset-y-0 left-md flex items-center text-text-secondary">
+            <span>🔍</span>
+          </div>
+        </div>
+
+        {# Action Buttons #}
+        <div class="flex gap-sm">
+          <button
+            type="submit"
+            class="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-md text-small font-semibold text-white transition-colors duration-150 hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/30"
+          >
+            Search
+          </button>
+          {% if q or selected_category or selected_stock_status %}
+            <a
+              href="{% url 'inventory:dashboard' %}"
+              class="inline-flex h-11 items-center justify-center rounded-xl border border-border bg-surface px-md text-small font-semibold text-text-primary hover:bg-background dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background"
+            >
+              Clear Filters
+            </a>
+          {% endif %}
+        </div>
+      </div>
+
+      {# Dropdown filters #}
+      <div class="grid gap-sm sm:grid-cols-2 lg:grid-cols-3">
+        {# Category Filter #}
+        <div class="flex flex-col gap-1">
+          <label class="text-caption font-semibold text-text-secondary">Category</label>
+          <select
+            name="category"
+            onchange="this.form.submit()"
+            class="h-11 rounded-xl border border-border bg-background px-md text-small text-text-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-dark-border dark:bg-dark-background dark:text-dark-text"
+          >
+            <option value="">All Categories</option>
+            {% for cat in categories %}
+              <option value="{{ cat.id }}" {% if selected_category == cat.id|stringformat:"s" %}selected{% endif %}>
+                {{ cat.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        {# Stock Status Filter #}
+        <div class="flex flex-col gap-1">
+          <label class="text-caption font-semibold text-text-secondary">Stock Status</label>
+          <select
+            name="stock_status"
+            onchange="this.form.submit()"
+            class="h-11 rounded-xl border border-border bg-background px-md text-small text-text-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-dark-border dark:bg-dark-background dark:text-dark-text"
+          >
+            <option value="">All Statuses</option>
+            <option value="low" {% if selected_stock_status == "low" %}selected{% endif %}>⚠️ Low Stock Warnings</option>
+            <option value="out" {% if selected_stock_status == "out" %}selected{% endif %}>🚨 Out of Stock</option>
+          </select>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  {# Product Inventory Levels Table #}
+  <div class="rounded-2xl border border-border bg-surface shadow-card dark:border-dark-border dark:bg-dark-surface overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b border-border bg-background/40 text-caption font-semibold uppercase tracking-wider text-text-secondary dark:border-dark-border">
+            <th class="px-md py-md">Product</th>
+            <th class="px-md py-md">Category / Supplier</th>
+            <th class="px-md py-md text-right">Min. Stock</th>
+            <th class="px-md py-md text-right">Current Stock</th>
+            <th class="px-md py-md text-right">Valuation</th>
+            <th class="px-md py-md text-center">Status</th>
+            {% if "inventory.add_stockadjustment" in perms %}
+              <th class="px-md py-md text-center">Actions</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border dark:divide-dark-border text-small">
+          {% for product in products %}
+            <tr class="hover:bg-background/20 dark:hover:bg-dark-background/20">
+              <td class="px-md py-md">
+                <div class="font-semibold text-text-primary dark:text-dark-text">{{ product.name }}</div>
+                <div class="text-caption text-text-secondary">{{ product.sku }}</div>
+              </td>
+              <td class="px-md py-md">
+                <div class="text-text-primary dark:text-dark-text">{{ product.category.name }}</div>
+                <div class="text-caption text-text-secondary">{{ product.supplier.company_name }}</div>
+              </td>
+              <td class="px-md py-md text-right font-medium text-text-secondary">
+                {{ product.minimum_stock }} {{ product.unit }}
+              </td>
+              <td class="px-md py-md text-right font-bold {% if product.is_out_of_stock %}text-danger{% elif product.is_low_stock %}text-warning{% else %}text-success{% endif %}">
+                {{ product.current_stock }} {{ product.unit }}
+              </td>
+              <td class="px-md py-md text-right font-semibold text-text-primary dark:text-dark-text">
+                {# valuation = purchase_price * current_stock #}
+                {% if product.current_stock > 0 %}
+                  ₹{% widthratio product.purchase_price 1 product.current_stock %}
+                {% else %}
+                  ₹0.00
+                {% endif %}
+              </td>
+              <td class="px-md py-md text-center">
+                {% if product.is_out_of_stock %}
+                  <span class="inline-flex items-center rounded-full bg-danger/10 px-sm py-1 text-caption font-bold text-danger">
+                    🚨 Out of Stock
+                  </span>
+                {% elif product.is_low_stock %}
+                  <span class="inline-flex items-center rounded-full bg-warning/10 px-sm py-1 text-caption font-bold text-warning">
+                    ⚠️ Low Stock
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center rounded-full bg-success/10 px-sm py-1 text-caption font-bold text-success">
+                    ✅ In Stock
+                  </span>
+                {% endif %}
+              </td>
+              {% if "inventory.add_stockadjustment" in perms %}
+                <td class="px-md py-md text-center">
+                  <a
+                    href="{% url 'inventory:adjust_stock' %}?product={{ product.id }}"
+                    class="inline-flex h-[32px] items-center justify-center rounded-lg border border-primary/20 px-sm text-caption font-semibold text-primary hover:bg-primary/5 transition-colors"
+                  >
+                    Adjust
+                  </a>
+                </td>
+              {% endif %}
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="7" class="px-md py-xl text-center text-text-secondary">
+                <div class="text-caption uppercase font-semibold">No inventory records found</div>
+                <div class="mt-sm text-small">Try refining your search queries or category filters.</div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    
+    {# Pagination #}
+    {% if is_paginated %}
+      <div class="border-t border-border px-md py-md flex items-center justify-between dark:border-dark-border bg-background/20">
+        <span class="text-caption text-text-secondary">
+          Page {{ page_obj.number }} of {{ paginator.num_pages }}
+        </span>
+        <div class="flex gap-sm">
+          {% if page_obj.has_previous %}
+            <a
+              href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_stock_status %}&stock_status={{ selected_stock_status }}{% endif %}"
+              class="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-surface px-md text-caption font-semibold text-text-primary hover:bg-background dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background"
+            >
+              Previous
+            </a>
+          {% endif %}
+          {% if page_obj.has_next %}
+            <a
+              href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}{% if selected_category %}&category={{ selected_category }}{% endif %}{% if selected_stock_status %}&stock_status={{ selected_stock_status }}{% endif %}"
+              class="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-surface px-md text-caption font-semibold text-text-primary hover:bg-background dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background"
+            >
+              Next
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

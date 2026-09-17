@@ -1,0 +1,161 @@
+{% extends "base_app.html" %}
+
+{% block title %}Categories — IMS{% endblock %}
+
+{% block breadcrumb %}
+  <nav class="mb-sm text-caption text-text-secondary dark:text-dark-text" aria-label="Breadcrumb">
+    <ol class="inline-flex list-none p-0">
+      <li class="flex items-center">
+        <a href="{% url 'dashboard:index' %}" class="hover:text-primary">Dashboard</a>
+        <span class="mx-xs font-semibold">/</span>
+      </li>
+      <li class="text-text-primary dark:text-dark-text font-medium" aria-current="page">Categories</li>
+    </ol>
+  </nav>
+{% endblock %}
+
+{% block content %}
+  {# Header block #}
+  <div class="mb-lg flex flex-col justify-between gap-md sm:flex-row sm:items-center">
+    <div>
+      <h1 class="text-heading-3 font-bold tracking-tight text-text-primary dark:text-dark-text">Categories</h1>
+      <p class="text-small text-text-secondary">Organize products into groups for easier tracking and reporting.</p>
+    </div>
+    {% if "catalog.add_category" in perms %}
+      <a
+        href="{% url 'catalog:category_add' %}"
+        class="inline-flex h-[44px] items-center justify-center rounded-xl bg-primary px-lg text-small font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/30"
+      >
+        Add Category
+      </a>
+    {% endif %}
+  </div>
+
+  {# Search and Filters #}
+  <div class="mb-md rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+    <form method="get" action="{% url 'catalog:category_list' %}" class="flex flex-col gap-sm md:flex-row">
+      <div class="relative flex-1">
+        <input
+          type="search"
+          name="q"
+          value="{{ q }}"
+          placeholder="Search categories..."
+          class="h-11 w-full rounded-xl border border-border bg-background pl-[44px] pr-md text-small text-text-primary placeholder:text-text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-dark-border dark:bg-dark-background dark:text-dark-text"
+        />
+        <div class="pointer-events-none absolute inset-y-0 left-md flex items-center text-text-secondary">
+          <span>🔍</span>
+        </div>
+      </div>
+      <div class="flex gap-sm">
+        <button
+          type="submit"
+          class="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-md text-small font-semibold text-white transition-colors duration-150 hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/30"
+        >
+          Search
+        </button>
+        {% if q %}
+          <a
+            href="{% url 'catalog:category_list' %}"
+            class="inline-flex h-11 items-center justify-center rounded-xl border border-border bg-surface px-md text-small font-semibold text-text-primary hover:bg-background dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background"
+          >
+            Clear
+          </a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  {# Table Card #}
+  <div class="overflow-hidden rounded-2xl border border-border bg-surface shadow-card dark:border-dark-border dark:bg-dark-surface">
+    <div class="overflow-x-auto">
+      <table class="w-full border-collapse text-left text-body">
+        <thead class="bg-background text-small font-semibold text-text-secondary dark:bg-dark-background">
+          <tr class="h-14 border-b border-border dark:border-dark-border">
+            <th class="px-lg">Name</th>
+            <th class="px-md">Description</th>
+            <th class="px-md">Status</th>
+            <th class="px-md">Created At</th>
+            <th class="px-lg text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border dark:divide-dark-border">
+          {% for category in categories %}
+            <tr class="h-14 hover:bg-background/40 dark:hover:bg-dark-background/20 transition-colors duration-150">
+              <td class="px-lg font-semibold text-text-primary dark:text-dark-text">{{ category.name }}</td>
+              <td class="px-md text-text-secondary truncate max-w-xs">{{ category.description|default:"—" }}</td>
+              <td class="px-md">
+                {% if category.is_active %}
+                  <span class="inline-flex items-center rounded-full bg-success/10 px-sm py-xs text-caption font-semibold text-success">
+                    Active
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center rounded-full bg-text-secondary/10 px-sm py-xs text-caption font-semibold text-text-secondary">
+                    Inactive
+                  </span>
+                {% endif %}
+              </td>
+              <td class="px-md text-text-secondary text-small">{{ category.created_at|date:"M d, Y" }}</td>
+              <td class="px-lg text-right">
+                <div class="inline-flex gap-sm">
+                  {% if "catalog.change_category" in perms %}
+                    <a
+                      href="{% url 'catalog:category_edit' category.pk %}"
+                      class="text-small font-medium text-primary hover:underline"
+                    >
+                      Edit
+                    </a>
+                  {% endif %}
+                  {% if "catalog.delete_category" in perms %}
+                    <a
+                      href="{% url 'catalog:category_delete' category.pk %}"
+                      class="text-small font-medium text-danger hover:underline ml-sm"
+                    >
+                      Delete
+                    </a>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="5" class="py-xl text-center text-text-secondary">
+                <div class="flex flex-col items-center justify-center gap-xs">
+                  <span class="text-3xl">📁</span>
+                  <p class="font-medium">No categories found</p>
+                  <p class="text-caption">Try adjusting your search terms or create a new category.</p>
+                </div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {# Pagination #}
+    {% if is_paginated %}
+      <div class="flex items-center justify-between border-t border-border px-lg py-md dark:border-dark-border">
+        <span class="text-caption text-text-secondary">
+          Showing page {{ page_obj.number }} of {{ paginator.num_pages }}
+        </span>
+        <div class="flex gap-sm">
+          {% if page_obj.has_previous %}
+            <a
+              href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}"
+              class="inline-flex h-9 items-center justify-center rounded-xl border border-border bg-surface px-md text-caption font-semibold text-text-primary hover:bg-background dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background"
+            >
+              Previous
+            </a>
+          {% endif %}
+          {% if page_obj.has_next %}
+            <a
+              href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}"
+              class="inline-flex h-9 items-center justify-center rounded-xl border border-border bg-surface px-md text-caption font-semibold text-text-primary hover:bg-background dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background"
+            >
+              Next
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

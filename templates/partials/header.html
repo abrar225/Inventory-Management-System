@@ -1,0 +1,129 @@
+{% load common_extras %}
+{% comment %}
+  Fixed header content: global search placeholder (activates with HTMX in a
+  later phase), theme toggle, and the profile dropdown menu (Alpine.js).
+{% endcomment %}
+<div class="flex flex-1 items-center justify-between gap-4">
+  {# Global search (placeholder until search lands) #}
+  <div class="hidden max-w-md flex-1 md:block">
+    <label for="global-search" class="sr-only">Search</label>
+    <input
+      id="global-search"
+      type="search"
+      placeholder="Search…"
+      disabled
+      class="h-11 w-full rounded-xl border border-border bg-background px-md text-small text-text-primary placeholder:text-text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-60 dark:border-dark-border dark:bg-dark-background dark:text-dark-text"
+    />
+  </div>
+
+  <div class="flex items-center gap-2">
+
+
+    {# Low Stock Alert Bell #}
+    {% get_low_stock_alerts as low_stock_alerts %}
+    <div x-data="{ open: false }" class="relative">
+      <button
+        type="button"
+        @click="open = !open"
+        @keydown.escape.window="open = false"
+        class="inline-flex h-10 w-10 items-center justify-center rounded-md text-text-secondary transition-colors duration-150 hover:bg-background dark:hover:bg-dark-background relative"
+        aria-label="Toggle stock alerts"
+      >
+        <span aria-hidden="true">🔔</span>
+        {% if low_stock_alerts %}
+          <span class="absolute top-1.5 right-1.5 flex h-2 w-2 rounded-full bg-danger"></span>
+        {% endif %}
+      </button>
+
+      <div
+        x-show="open"
+        x-transition
+        @click.outside="open = false"
+        class="absolute right-0 mt-2 w-80 rounded-md border border-border bg-surface py-1 shadow-card dark:border-dark-border dark:bg-dark-surface z-50"
+        style="display: none;"
+      >
+        <div class="border-b border-border px-md py-2 dark:border-dark-border">
+          <p class="text-small font-bold text-text-primary dark:text-dark-text">Stock Notifications</p>
+        </div>
+        <div class="max-h-64 overflow-y-auto divide-y divide-border dark:divide-dark-border">
+          {% for p in low_stock_alerts %}
+            <div class="px-md py-2 hover:bg-background/40 dark:hover:bg-dark-background/40 text-caption flex flex-col gap-0.5">
+              <div class="flex items-center justify-between">
+                <span class="font-semibold text-text-primary dark:text-dark-text truncate max-w-[180px]">{{ p.name }}</span>
+                <span class="font-bold text-danger">{{ p.current_stock }} {{ p.unit }}</span>
+              </div>
+              <div class="text-text-secondary flex justify-between items-center mt-1">
+                <span>SKU: {{ p.sku }} &middot; Min: {{ p.minimum_stock }}</span>
+                {% if "purchasing.add_purchase" in perms %}
+                  <a href="{% url 'purchasing:purchase_add' %}" class="text-primary hover:underline font-bold">Order</a>
+                {% endif %}
+              </div>
+            </div>
+          {% empty %}
+            <div class="px-md py-4 text-center text-text-secondary text-caption">
+              No low stock alerts.
+            </div>
+          {% endfor %}
+        </div>
+        {% if low_stock_alerts %}
+          <div class="border-t border-border px-md py-2 text-center dark:border-dark-border">
+            <a href="{% url 'reporting:dashboard' %}?tab=inventory&inv_status=low" class="text-caption text-primary font-bold hover:underline">
+              View all low stock products
+            </a>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Profile dropdown #}
+    <div x-data="{ open: false }" class="relative">
+      <button
+        type="button"
+        @click="open = !open"
+        @keydown.escape.window="open = false"
+        class="flex items-center gap-2 rounded-full focus:outline-none focus:ring-2 focus:ring-primary/30"
+        :aria-expanded="open"
+        aria-haspopup="true"
+        aria-label="Open profile menu"
+      >
+        {% include "partials/avatar.html" with user=request.user size="md" %}
+      </button>
+
+      <div
+        x-show="open"
+        x-transition
+        @click.outside="open = false"
+        class="absolute right-0 mt-2 w-56 rounded-md border border-border bg-surface py-1 shadow-card dark:border-dark-border dark:bg-dark-surface"
+        style="display: none;"
+        role="menu"
+      >
+        <div class="border-b border-border px-md py-2 dark:border-dark-border">
+          <p class="truncate text-small font-medium">{{ request.user.get_full_name|default:request.user.email }}</p>
+          <p class="truncate text-caption text-text-secondary">{{ request.user.email }}</p>
+        </div>
+        <a
+          href="{% url 'accounts:profile' %}"
+          class="block px-md py-2 text-small text-text-secondary hover:bg-background hover:text-text-primary dark:hover:bg-dark-background"
+          role="menuitem"
+          >Profile</a
+        >
+        <a
+          href="{% url 'accounts:password_change' %}"
+          class="block px-md py-2 text-small text-text-secondary hover:bg-background hover:text-text-primary dark:hover:bg-dark-background"
+          role="menuitem"
+          >Change password</a
+        >
+        <form method="post" action="{% url 'accounts:logout' %}" class="border-t border-border dark:border-dark-border">
+          {% csrf_token %}
+          <button
+            type="submit"
+            class="block w-full px-md py-2 text-left text-small text-danger hover:bg-danger/5"
+            role="menuitem"
+          >
+            Logout
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

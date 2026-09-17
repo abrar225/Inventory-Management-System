@@ -1,0 +1,66 @@
+{% extends "base_app.html" %}
+
+{% block title %}{% if object %}Edit Category — {{ object.name }}{% else %}New Category{% endif %} — IMS{% endblock %}
+
+{% block breadcrumb %}
+  <nav class="mb-sm text-caption text-text-secondary dark:text-dark-text" aria-label="Breadcrumb">
+    <ol class="inline-flex list-none p-0">
+      <li class="flex items-center">
+        <a href="{% url 'dashboard:index' %}" class="hover:text-primary">Dashboard</a>
+        <span class="mx-xs font-semibold">/</span>
+      </li>
+      <li class="flex items-center">
+        <a href="{% url 'catalog:category_list' %}" class="hover:text-primary">Categories</a>
+        <span class="mx-xs font-semibold">/</span>
+      </li>
+      <li class="text-text-primary dark:text-dark-text font-medium" aria-current="page">
+        {% if object %}Edit{% else %}New{% endif %}
+      </li>
+    </ol>
+  </nav>
+{% endblock %}
+
+{% block content %}
+  <div class="max-w-2xl mx-auto rounded-3xl border border-border bg-surface p-lg shadow-card dark:border-dark-border dark:bg-dark-surface">
+    <h2 class="mb-lg text-heading-4 font-bold text-text-primary dark:text-dark-text">
+      {% if object %}Edit Category{% else %}Create Category{% endif %}
+    </h2>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+      
+      {# Name & Is Active inline grid #}
+      <div class="grid gap-x-lg sm:grid-cols-3 items-end">
+        <div class="sm:col-span-2">
+          {% include "accounts/partials/field.html" with field=form.name %}
+        </div>
+        <div class="mb-md pb-md">
+          <label class="flex items-center gap-sm cursor-pointer select-none">
+            {{ form.is_active }}
+            <span class="text-small font-medium text-text-primary dark:text-dark-text">Active Status</span>
+          </label>
+          {% for error in form.is_active.errors %}
+            <p class="mt-1 text-caption text-danger">{{ error }}</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      {% include "accounts/partials/field.html" with field=form.description %}
+
+      <div class="mt-lg flex items-center gap-sm">
+        <button
+          type="submit"
+          class="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-lg text-small font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/30"
+        >
+          {% if object %}Save Changes{% else %}Create Category{% endif %}
+        </button>
+        <a
+          href="{% url 'catalog:category_list' %}"
+          class="inline-flex h-11 items-center justify-center rounded-xl border border-border bg-surface px-lg text-small font-semibold text-text-primary hover:bg-background dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background"
+        >
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

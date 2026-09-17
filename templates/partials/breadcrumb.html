@@ -1,0 +1,21 @@
+{% load common_extras %}
+{% comment %}
+  Breadcrumb trail. Context: items = comma-separated labels (e.g.
+  "Dashboard,Products,Edit"). The last item is the current page (not a link).
+  A richer object-based breadcrumb arrives with the catalog module; this
+  string form covers the simple auth/dashboard pages.
+{% endcomment %}
+<nav aria-label="Breadcrumb" class="mb-md">
+  <ol class="flex flex-wrap items-center gap-2 text-small text-text-secondary">
+    {% for label in items|split:"," %}
+      <li class="flex items-center gap-2">
+        {% if not forloop.last %}
+          <span class="text-text-secondary">{{ label }}</span>
+          <span aria-hidden="true" class="text-border">&gt;</span>
+        {% else %}
+          <span class="font-medium text-text-primary dark:text-dark-text" aria-current="page">{{ label }}</span>
+        {% endif %}
+      </li>
+    {% endfor %}
+  </ol>
+</nav>

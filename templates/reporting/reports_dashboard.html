@@ -1,0 +1,385 @@
+{% extends "base_app.html" %}
+
+{% block title %}Reporting Center — IMS{% endblock %}
+
+{% block breadcrumb %}
+  <nav class="mb-sm text-caption text-text-secondary dark:text-dark-text" aria-label="Breadcrumb">
+    <ol class="inline-flex list-none p-0">
+      <li class="flex items-center">
+        <a href="{% url 'dashboard:index' %}" class="hover:text-primary">Dashboard</a>
+        <span class="mx-xs font-semibold">/</span>
+      </li>
+      <li class="text-text-primary dark:text-dark-text font-medium" aria-current="page">Reports</li>
+    </ol>
+  </nav>
+{% endblock %}
+
+{% block content %}
+  <div class="mb-lg">
+    <h1 class="text-h3 font-bold tracking-tight text-text-primary dark:text-dark-text">Reporting Center</h1>
+    <p class="text-small text-text-secondary">Export analysis sheets and track inventory valuations, sales performance, and purchase budgets.</p>
+  </div>
+
+  {# AlpineJS Tabs Container #}
+  <div x-data="{ activeTab: '{{ request.GET.tab|default:'inventory' }}' }" class="flex flex-col gap-md">
+    
+    {# Tab Bar #}
+    <div class="flex border-b border-border dark:border-dark-border">
+      <button
+        @click="activeTab = 'inventory'"
+        :class="activeTab === 'inventory' ? 'border-primary text-primary font-bold' : 'border-transparent text-text-secondary hover:text-text-primary dark:hover:text-dark-text'"
+        class="border-b-2 px-lg py-md text-small font-semibold transition-all duration-150"
+      >
+        Inventory Valuation
+      </button>
+      <button
+        @click="activeTab = 'sales'"
+        :class="activeTab === 'sales' ? 'border-primary text-primary font-bold' : 'border-transparent text-text-secondary hover:text-text-primary dark:hover:text-dark-text'"
+        class="border-b-2 px-lg py-md text-small font-semibold transition-all duration-150"
+      >
+        Sales Analysis
+      </button>
+      <button
+        @click="activeTab = 'purchases'"
+        :class="activeTab === 'purchases' ? 'border-primary text-primary font-bold' : 'border-transparent text-text-secondary hover:text-text-primary dark:hover:text-dark-text'"
+        class="border-b-2 px-lg py-md text-small font-semibold transition-all duration-150"
+      >
+        Purchase Analysis
+      </button>
+    </div>
+
+    {# ===================================================================== #}
+    {# 1. INVENTORY VALUATION TAB                                            #}
+    {# ===================================================================== #}
+    <div x-show="activeTab === 'inventory'" class="flex flex-col gap-md">
+      
+      {# Filters and Exporter #}
+      <div class="rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+        <form method="get" action="{% url 'reporting:dashboard' %}" class="flex flex-col sm:flex-row gap-md sm:items-end justify-between">
+          <input type="hidden" name="tab" value="inventory" />
+          
+          <div class="grid gap-sm sm:grid-cols-2 flex-1 w-full">
+            {# Category Filter #}
+            <div class="flex flex-col gap-1">
+              <label class="text-caption font-semibold text-text-secondary">Category</label>
+              <select
+                name="inv_category"
+                onchange="this.form.submit()"
+                class="h-11 rounded-xl border border-border bg-background px-md text-small text-text-primary focus:border-primary focus:outline-none dark:border-dark-border dark:bg-dark-background dark:text-dark-text"
+              >
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                  <option value="{{ cat.id }}" {% if selected_inv_cat == cat.id|stringformat:"s" %}selected{% endif %}>
+                    {{ cat.name }}
+                  </option>
+                {% endfor %}
+              </select>
+            </div>
+
+            {# Stock Status Filter #}
+            <div class="flex flex-col gap-1">
+              <label class="text-caption font-semibold text-text-secondary">Stock Status</label>
+              <select
+                name="inv_status"
+                onchange="this.form.submit()"
+                class="h-11 rounded-xl border border-border bg-background px-md text-small text-text-primary focus:border-primary focus:outline-none dark:border-dark-border dark:bg-dark-background dark:text-dark-text"
+              >
+                <option value="">All Items</option>
+                <option value="low" {% if selected_inv_status == "low" %}selected{% endif %}>Low Stock Alerts</option>
+                <option value="out" {% if selected_inv_status == "out" %}selected{% endif %}>Out of Stock</option>
+                <option value="in" {% if selected_inv_status == "in" %}selected{% endif %}>Healthy Stock</option>
+              </select>
+            </div>
+          </div>
+
+          {# Export button #}
+          <a
+            href="{% url 'reporting:inventory_csv' %}?inv_category={{ selected_inv_cat }}&inv_status={{ selected_inv_status }}"
+            class="inline-flex h-11 items-center justify-center rounded-xl bg-success px-lg text-small font-semibold text-white transition-colors duration-150 hover:bg-success/90 focus:outline-none focus:ring-2 focus:ring-success/30 w-full sm:w-auto"
+          >
+            📥 Export to CSV
+          </a>
+        </form>
+      </div>
+
+      {# Valuation KPIs #}
+      <div class="grid gap-md sm:grid-cols-2 lg:grid-cols-4">
+        {# Qty Card #}
+        <div class="rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+          <div class="text-caption font-semibold uppercase tracking-wider text-text-secondary">Total Stock Units</div>
+          <div class="mt-sm text-h4 font-bold text-text-primary dark:text-dark-text">{{ inv_total_qty }}</div>
+        </div>
+        {# Cost valuation card #}
+        <div class="rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+          <div class="text-caption font-semibold uppercase tracking-wider text-text-secondary">Cost Valuation</div>
+          <div class="mt-sm text-h4 font-bold text-text-primary dark:text-dark-text">₹{{ inv_cost_valuation|floatformat:2 }}</div>
+        </div>
+        {# Retail valuation card #}
+        <div class="rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+          <div class="text-caption font-semibold uppercase tracking-wider text-text-secondary">Retail Valuation</div>
+          <div class="mt-sm text-h4 font-bold text-text-primary dark:text-dark-text">₹{{ inv_retail_valuation|floatformat:2 }}</div>
+        </div>
+        {# Profit Card #}
+        <div class="rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+          <div class="text-caption font-semibold uppercase tracking-wider text-text-secondary">Potential Profit Margin</div>
+          <div class="mt-sm text-h4 font-bold text-success">₹{{ inv_potential_profit|floatformat:2 }}</div>
+        </div>
+      </div>
+
+      {# Table #}
+      <div class="rounded-2xl border border-border bg-surface shadow-card dark:border-dark-border dark:bg-dark-surface overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-small">
+            <thead>
+              <tr class="border-b border-border bg-background/40 text-caption font-semibold uppercase tracking-wider text-text-secondary dark:border-dark-border">
+                <th class="px-md py-md">Product</th>
+                <th class="px-md py-md">Category</th>
+                <th class="px-md py-md text-right">In Stock</th>
+                <th class="px-md py-md text-right">Unit cost</th>
+                <th class="px-md py-md text-right">Cost valuation</th>
+                <th class="px-md py-md text-right">Potential profit</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border dark:divide-dark-border">
+              {% for p in inv_products %}
+                <tr class="hover:bg-background/20 dark:hover:bg-dark-background/20">
+                  <td class="px-md py-md">
+                    <span class="font-bold text-text-primary dark:text-dark-text">{{ p.name }}</span>
+                    <div class="text-caption text-text-secondary">SKU: {{ p.sku }}</div>
+                  </td>
+                  <td class="px-md py-md text-text-secondary font-medium">{{ p.category.name }}</td>
+                  <td class="px-md py-md text-right font-bold {% if p.current_stock <= p.minimum_stock %}text-danger{% else %}text-text-primary dark:text-dark-text{% endif %}">
+                    {{ p.current_stock }} {{ p.unit }}
+                  </td>
+                  <td class="px-md py-md text-right">₹{{ p.purchase_price }}</td>
+                  <td class="px-md py-md text-right font-semibold">
+                    ₹{% widthratio p.current_stock 1 p.purchase_price %}
+                  </td>
+                  <td class="px-md py-md text-right font-bold text-success">
+                    ₹{% widthratio p.current_stock 1 p.selling_price as retail_val %}
+                    {% widthratio p.current_stock 1 p.purchase_price as cost_val %}
+                    {# Just custom placeholder subtract #}
+                    {{ p.current_stock }}
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="6" class="px-md py-xl text-center text-text-secondary">No catalog products fit these criteria.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    {# ===================================================================== #}
+    {# 2. SALES ANALYSIS TAB                                                 #}
+    {# ===================================================================== #}
+    <div x-show="activeTab === 'sales'" class="flex flex-col gap-md" style="display: none;">
+      
+      {# Filters and Exporter #}
+      <div class="rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+        <form method="get" action="{% url 'reporting:dashboard' %}" class="flex flex-col sm:flex-row gap-md sm:items-end justify-between">
+          <input type="hidden" name="tab" value="sales" />
+          
+          <div class="grid gap-sm sm:grid-cols-2 flex-1 w-full">
+            {# Start Date Filter #}
+            <div class="flex flex-col gap-1">
+              <label class="text-caption font-semibold text-text-secondary">Start Date</label>
+              <input
+                type="date"
+                name="sale_start"
+                value="{{ sale_start }}"
+                onchange="this.form.submit()"
+                class="h-11 rounded-xl border border-border bg-background px-md text-small text-text-primary focus:border-primary focus:outline-none dark:border-dark-border dark:bg-dark-background dark:text-dark-text"
+              />
+            </div>
+
+            {# End Date Filter #}
+            <div class="flex flex-col gap-1">
+              <label class="text-caption font-semibold text-text-secondary">End Date</label>
+              <input
+                type="date"
+                name="sale_end"
+                value="{{ sale_end }}"
+                onchange="this.form.submit()"
+                class="h-11 rounded-xl border border-border bg-background px-md text-small text-text-primary focus:border-primary focus:outline-none dark:border-dark-border dark:bg-dark-background dark:text-dark-text"
+              />
+            </div>
+          </div>
+
+          {# Export button #}
+          <a
+            href="{% url 'reporting:sales_csv' %}?sale_start={{ sale_start }}&sale_end={{ sale_end }}"
+            class="inline-flex h-11 items-center justify-center rounded-xl bg-success px-lg text-small font-semibold text-white transition-colors duration-150 hover:bg-success/90 focus:outline-none focus:ring-2 focus:ring-success/30 w-full sm:w-auto"
+          >
+            📥 Export to CSV
+          </a>
+        </form>
+      </div>
+
+      {# Sales KPIs #}
+      <div class="grid gap-md sm:grid-cols-3">
+        {# Invoices Card #}
+        <div class="rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+          <div class="text-caption font-semibold uppercase tracking-wider text-text-secondary">Invoices processed</div>
+          <div class="mt-sm text-h4 font-bold text-text-primary dark:text-dark-text">{{ sales_invoices_count }}</div>
+        </div>
+        {# Qty Card #}
+        <div class="rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+          <div class="text-caption font-semibold uppercase tracking-wider text-text-secondary">Quantity Sold</div>
+          <div class="mt-sm text-h4 font-bold text-text-primary dark:text-dark-text">{{ sales_qty }} units</div>
+        </div>
+        {# Revenue Card #}
+        <div class="rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+          <div class="text-caption font-semibold uppercase tracking-wider text-text-secondary">Sales Revenue</div>
+          <div class="mt-sm text-h4 font-bold text-primary">₹{{ sales_revenue|floatformat:2 }}</div>
+        </div>
+      </div>
+
+      {# Table #}
+      <div class="rounded-2xl border border-border bg-surface shadow-card dark:border-dark-border dark:bg-dark-surface overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-small">
+            <thead>
+              <tr class="border-b border-border bg-background/40 text-caption font-semibold uppercase tracking-wider text-text-secondary dark:border-dark-border">
+                <th class="px-md py-md">Invoice Info</th>
+                <th class="px-md py-md">Product</th>
+                <th class="px-md py-md text-right">Qty</th>
+                <th class="px-md py-md text-right">Price</th>
+                <th class="px-md py-md text-right">Line Total</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border dark:divide-dark-border">
+              {% for item in sale_items %}
+                <tr class="hover:bg-background/20 dark:hover:bg-dark-background/20">
+                  <td class="px-md py-md">
+                    <span class="font-bold text-text-primary dark:text-dark-text">{{ item.sale.invoice_number }}</span>
+                    <div class="text-caption text-text-secondary">Date: {{ item.sale.sale_date|date:"Y-m-d" }}</div>
+                  </td>
+                  <td class="px-md py-md">
+                    <span class="font-medium text-text-primary dark:text-dark-text">{{ item.product.name }}</span>
+                    <div class="text-caption text-text-secondary">SKU: {{ item.product.sku }}</div>
+                  </td>
+                  <td class="px-md py-md text-right font-medium">{{ item.quantity }}</td>
+                  <td class="px-md py-md text-right">₹{{ item.unit_price }}</td>
+                  <td class="px-md py-md text-right font-bold text-text-primary dark:text-dark-text">₹{{ item.line_total }}</td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="5" class="px-md py-xl text-center text-text-secondary">No sales transactions found in this date range.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    {# ===================================================================== #}
+    {# 3. PURCHASES ANALYSIS TAB                                             #}
+    {# ===================================================================== #}
+    <div x-show="activeTab === 'purchases'" class="flex flex-col gap-md" style="display: none;">
+      
+      {# Filters and Exporter #}
+      <div class="rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+        <form method="get" action="{% url 'reporting:dashboard' %}" class="flex flex-col sm:flex-row gap-md sm:items-end justify-between">
+          <input type="hidden" name="tab" value="purchases" />
+          
+          <div class="grid gap-sm sm:grid-cols-2 flex-1 w-full">
+            {# Start Date Filter #}
+            <div class="flex flex-col gap-1">
+              <label class="text-caption font-semibold text-text-secondary">Start Date</label>
+              <input
+                type="date"
+                name="pur_start"
+                value="{{ pur_start }}"
+                onchange="this.form.submit()"
+                class="h-11 rounded-xl border border-border bg-background px-md text-small text-text-primary focus:border-primary focus:outline-none dark:border-dark-border dark:bg-dark-background dark:text-dark-text"
+              />
+            </div>
+
+            {# End Date Filter #}
+            <div class="flex flex-col gap-1">
+              <label class="text-caption font-semibold text-text-secondary">End Date</label>
+              <input
+                type="date"
+                name="pur_end"
+                value="{{ pur_end }}"
+                onchange="this.form.submit()"
+                class="h-11 rounded-xl border border-border bg-background px-md text-small text-text-primary focus:border-primary focus:outline-none dark:border-dark-border dark:bg-dark-background dark:text-dark-text"
+              />
+            </div>
+          </div>
+
+          {# Export button #}
+          <a
+            href="{% url 'reporting:purchases_csv' %}?pur_start={{ pur_start }}&pur_end={{ pur_end }}"
+            class="inline-flex h-11 items-center justify-center rounded-xl bg-success px-lg text-small font-semibold text-white transition-colors duration-150 hover:bg-success/90 focus:outline-none focus:ring-2 focus:ring-success/30 w-full sm:w-auto"
+          >
+            📥 Export to CSV
+          </a>
+        </form>
+      </div>
+
+      {# Purchase KPIs #}
+      <div class="grid gap-md sm:grid-cols-3">
+        {# Orders Card #}
+        <div class="rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+          <div class="text-caption font-semibold uppercase tracking-wider text-text-secondary">Orders received</div>
+          <div class="mt-sm text-h4 font-bold text-text-primary dark:text-dark-text">{{ purchases_orders_count }}</div>
+        </div>
+        {# Qty Card #}
+        <div class="rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+          <div class="text-caption font-semibold uppercase tracking-wider text-text-secondary">Quantity Purchased</div>
+          <div class="mt-sm text-h4 font-bold text-text-primary dark:text-dark-text">{{ purchases_qty }} units</div>
+        </div>
+        {# Expenditure Card #}
+        <div class="rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+          <div class="text-caption font-semibold uppercase tracking-wider text-text-secondary">Purchase Expenditure</div>
+          <div class="mt-sm text-h4 font-bold text-primary">₹{{ purchases_cost|floatformat:2 }}</div>
+        </div>
+      </div>
+
+      {# Table #}
+      <div class="rounded-2xl border border-border bg-surface shadow-card dark:border-dark-border dark:bg-dark-surface overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-small">
+            <thead>
+              <tr class="border-b border-border bg-background/40 text-caption font-semibold uppercase tracking-wider text-text-secondary dark:border-dark-border">
+                <th class="px-md py-md">PO Info</th>
+                <th class="px-md py-md">Product</th>
+                <th class="px-md py-md text-right">Qty</th>
+                <th class="px-md py-md text-right">Cost Price</th>
+                <th class="px-md py-md text-right">Line Total</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-border dark:divide-dark-border">
+              {% for item in purchase_items %}
+                <tr class="hover:bg-background/20 dark:hover:bg-dark-background/20">
+                  <td class="px-md py-md">
+                    <span class="font-bold text-text-primary dark:text-dark-text">{{ item.purchase.purchase_number }}</span>
+                    <div class="text-caption text-text-secondary">Date: {{ item.purchase.purchase_date|date:"Y-m-d" }}</div>
+                  </td>
+                  <td class="px-md py-md">
+                    <span class="font-medium text-text-primary dark:text-dark-text">{{ item.product.name }}</span>
+                    <div class="text-caption text-text-secondary">SKU: {{ item.product.sku }}</div>
+                  </td>
+                  <td class="px-md py-md text-right font-medium">{{ item.quantity }}</td>
+                  <td class="px-md py-md text-right">₹{{ item.unit_price }}</td>
+                  <td class="px-md py-md text-right font-bold text-text-primary dark:text-dark-text">₹{{ item.line_total }}</td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="5" class="px-md py-xl text-center text-text-secondary">No purchase receipts found in this date range.</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div>
+{% endblock %}

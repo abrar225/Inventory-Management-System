@@ -1,0 +1,37 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Inventory Management System{% endblock %}</title>
+
+
+
+    <link rel="stylesheet" href="{% static 'css/app.css' %}" />
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body
+    class="h-full bg-background text-text-primary antialiased dark:bg-dark-background dark:text-dark-text"
+  >
+    {% block body %}
+      {# App shell is provided by base_app.html; auth pages override body. #}
+      {% block content %}{% endblock %}
+    {% endblock %}
+
+    {# Toast container — populated by the toast component in Phase 3. #}
+    <div
+      id="toast-container"
+      class="pointer-events-none fixed right-4 top-4 z-50 flex w-full max-w-sm flex-col gap-2"
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      {% block toasts %}{% endblock %}
+    </div>
+
+    <script src="{% static 'js/vendor/alpine.min.js' %}" defer></script>
+    <script src="{% static 'js/vendor/htmx.min.js' %}" defer></script>
+    <script src="{% static 'js/app.js' %}" defer></script>
+    {% block extra_body %}{% endblock %}
+  </body>
+</html>

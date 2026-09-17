@@ -1,0 +1,27 @@
+# Ruff configuration: linting + import sorting (isort rules).
+line-length = 79
+target-version = "py313"
+
+extend-exclude = ["**/migrations/**"]
+
+[lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "DJ",  # flake8-django
+    "C4",  # flake8-comprehensions
+]
+ignore = [
+    "E501",  # line length handled by the formatter
+]
+
+[lint.isort]
+known-first-party = ["apps", "config"]
+
+[lint.per-file-ignores]
+"*/settings/*.py" = ["F401", "F403", "F405"]  # star imports across settings

@@ -1,0 +1,186 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}System Audit Trail — IMS{% endblock %}
+
+{% block breadcrumb %}
+  <nav class="mb-sm text-caption text-text-secondary dark:text-dark-text" aria-label="Breadcrumb">
+    <ol class="inline-flex list-none p-0">
+      <li class="flex items-center">
+        <a href="{% url 'dashboard:index' %}" class="hover:text-primary">Dashboard</a>
+        <span class="mx-xs font-semibold">/</span>
+      </li>
+      <li class="text-text-primary dark:text-dark-text font-medium" aria-current="page">Audit Logs</li>
+    </ol>
+  </nav>
+{% endblock %}
+
+{% block content %}
+  {# Header block #}
+  <div class="mb-lg flex flex-col justify-between gap-md sm:flex-row sm:items-center">
+    <div>
+      <h1 class="text-h3 font-bold tracking-tight text-text-primary dark:text-dark-text">System Audit Logs</h1>
+      <p class="text-small text-text-secondary">Immutable ledger of all administrative, inventory, purchasing, and sales transactions.</p>
+    </div>
+  </div>
+
+  {# Search and Filters #}
+  <div class="mb-md rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+    <form method="get" action="{% url 'audit:logs' %}" class="flex flex-col gap-sm md:flex-row">
+      {# Search Input #}
+      <div class="relative flex-1">
+        <input
+          type="search"
+          name="q"
+          value="{{ search_query }}"
+          placeholder="Search by user, action, target or details..."
+          class="h-11 w-full rounded-xl border border-border bg-background pl-[44px] pr-md text-small text-text-primary placeholder:text-text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-dark-border dark:bg-dark-background dark:text-dark-text"
+        />
+        <div class="pointer-events-none absolute inset-y-0 left-md flex items-center text-text-secondary">
+          <span>🔍</span>
+        </div>
+      </div>
+
+      {# Action Filter #}
+      <div class="w-full md:w-56">
+        <select
+          name="action"
+          onchange="this.form.submit()"
+          class="h-11 w-full rounded-xl border border-border bg-background px-md text-small text-text-primary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-dark-border dark:bg-dark-background dark:text-dark-text"
+        >
+          <option value="">All Action Types</option>
+          {% for act in actions %}
+            <option value="{{ act }}" {% if action_filter == act %}selected{% endif %}>
+              {{ act }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      {# Action Buttons #}
+      <div class="flex gap-sm">
+        <button
+          type="submit"
+          class="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-md text-small font-semibold text-white transition-colors duration-150 hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/30"
+        >
+          Filter
+        </button>
+        {% if search_query or action_filter %}
+          <a
+            href="{% url 'audit:logs' %}"
+            class="inline-flex h-11 items-center justify-center rounded-xl border border-border bg-surface px-md text-small font-semibold text-text-primary hover:bg-background dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background"
+          >
+            Clear
+          </a>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  {# Audit Timeline Grid #}
+  <div class="rounded-2xl border border-border bg-surface shadow-card dark:border-dark-border dark:bg-dark-surface overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b border-border bg-background/40 text-caption font-semibold uppercase tracking-wider text-text-secondary dark:border-dark-border">
+            <th class="px-md py-md">Timestamp</th>
+            <th class="px-md py-md">Actor</th>
+            <th class="px-md py-md">Action</th>
+            <th class="px-md py-md">Target Resource</th>
+            <th class="px-md py-md">IP Address</th>
+            <th class="px-md py-md">Details</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border text-small text-text-primary dark:divide-dark-border dark:text-dark-text">
+          {% for log in logs %}
+            <tr class="hover:bg-background/20 dark:hover:bg-dark-background/25 align-top">
+              <td class="px-md py-md whitespace-nowrap text-caption text-text-secondary font-medium">
+                {{ log.timestamp|date:"M j, Y &middot; g:i a" }}
+              </td>
+              <td class="px-md py-md whitespace-nowrap">
+                {% if log.user %}
+                  <div class="flex items-center gap-2">
+                    {% include "partials/avatar.html" with user=log.user size="xs" %}
+                    <div class="flex flex-col">
+                      <span class="font-semibold">{{ log.user.get_full_name|default:log.user.username }}</span>
+                      <span class="text-caption text-text-secondary">{{ log.user.email }}</span>
+                    </div>
+                  </div>
+                {% else %}
+                  <span class="text-text-secondary italic">System Process</span>
+                {% endif %}
+              </td>
+              <td class="px-md py-md whitespace-nowrap">
+                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-caption font-semibold
+                  {% if log.action == 'Login' %}
+                    bg-success/15 text-success
+                  {% elif log.action == 'Logout' %}
+                    bg-text-secondary/15 text-text-secondary
+                  {% elif 'Delete' in log.action or 'Cancel' in log.action %}
+                    bg-danger/15 text-danger
+                  {% elif 'Adjust' in log.action or 'Reset' in log.action %}
+                    bg-warning/15 text-warning
+                  {% else %}
+                    bg-primary/15 text-primary
+                  {% endif %}">
+                  {{ log.action }}
+                </span>
+              </td>
+              <td class="px-md py-md whitespace-nowrap">
+                {% if log.model_name %}
+                  <div class="flex flex-col">
+                    <span class="font-semibold">{{ log.object_repr|default:"—" }}</span>
+                    <span class="text-caption text-text-secondary">{{ log.model_name }}</span>
+                  </div>
+                {% else %}
+                  <span class="text-text-secondary">—</span>
+                {% endif %}
+              </td>
+              <td class="px-md py-md whitespace-nowrap text-caption text-text-secondary">
+                {{ log.ip_address|default:"—" }}
+              </td>
+              <td class="px-md py-md max-w-sm">
+                <p class="line-clamp-2 text-caption text-text-secondary hover:line-clamp-none transition-all duration-150 cursor-pointer">
+                  {{ log.details|default:"No details recorded." }}
+                </p>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" class="px-md py-12 text-center text-text-secondary">
+                No audit trail logs match the filter.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {# Pagination #}
+    {% if is_paginated %}
+      <div class="border-t border-border px-md py-md flex items-center justify-between dark:border-dark-border">
+        <span class="text-caption text-text-secondary">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+        <div class="flex gap-xs">
+          {% if page_obj.has_previous %}
+            <a
+              href="?page={{ page_obj.previous_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if action_filter %}&action={{ action_filter }}{% endif %}"
+              class="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-surface px-md text-caption font-semibold text-text-primary hover:bg-background dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background"
+            >
+              Previous
+            </a>
+          {% endif %}
+          {% if page_obj.has_next %}
+            <a
+              href="?page={{ page_obj.next_page_number }}{% if search_query %}&q={{ search_query }}{% endif %}{% if action_filter %}&action={{ action_filter }}{% endif %}"
+              class="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-surface px-md text-caption font-semibold text-text-primary hover:bg-background dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background"
+            >
+              Next
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

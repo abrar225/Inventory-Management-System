@@ -1,0 +1,36 @@
+[project]
+name = "inventory-management-system"
+version = "1.0.0"
+description = "A Django-based Inventory Management System."
+requires-python = ">=3.13"
+
+[tool.black]
+line-length = 79
+target-version = ["py313"]
+extend-exclude = '''
+/(
+  migrations
+)/
+'''
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.dev"
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
+addopts = "--reuse-db"
+testpaths = ["apps", "tests"]
+
+[tool.coverage.run]
+source = ["apps"]
+omit = [
+    "*/migrations/*",
+    "*/tests/*",
+    "*/apps.py",
+    "*/__init__.py",
+    "config/*",
+    "manage.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 85

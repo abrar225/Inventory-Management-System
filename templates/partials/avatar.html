@@ -1,0 +1,8 @@
+{% comment %}
+  Avatar component: shows the user's uploaded image, or their initials as a
+  fallback. Context: user (a User), size ("sm" | "md" | "lg", default "md").
+{% endcomment %}
+{% if size == "lg" %}{% with dim="h-20 w-20 text-h4" %}{% include "partials/_avatar_inner.html" %}{% endwith %}
+{% elif size == "sm" %}{% with dim="h-8 w-8 text-caption" %}{% include "partials/_avatar_inner.html" %}{% endwith %}
+{% else %}{% with dim="h-10 w-10 text-small" %}{% include "partials/_avatar_inner.html" %}{% endwith %}
+{% endif %}

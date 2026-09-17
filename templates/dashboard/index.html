@@ -1,0 +1,257 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Dashboard — IMS{% endblock %}
+
+{% block extra_js %}
+  {# Secure Chart.js CDN for interactive visual graphs #}
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
+{% endblock %}
+
+{% block breadcrumb %}
+  <nav class="mb-sm text-caption text-text-secondary dark:text-dark-text" aria-label="Breadcrumb">
+    <ol class="inline-flex list-none p-0">
+      <li class="text-text-primary dark:text-dark-text font-medium" aria-current="page">Dashboard</li>
+    </ol>
+  </nav>
+{% endblock %}
+
+{% block page_header %}
+  <div class="mb-lg">
+    <h1 class="text-h3 font-bold tracking-tight text-text-primary dark:text-dark-text">
+      Welcome back, {{ request.user.first_name|default:request.user.username }}
+    </h1>
+    <p class="text-small text-text-secondary">Here is an overview of your college inventory laboratory metrics.</p>
+  </div>
+{% endblock %}
+
+{% block content %}
+  {# Row 1: KPI Cards Grid #}
+  <div class="grid gap-md sm:grid-cols-2 lg:grid-cols-4 mb-lg">
+    {# Card 1: Stock Valuation #}
+    <div class="rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+      <div class="text-caption font-semibold uppercase tracking-wider text-text-secondary">Stock Valuation</div>
+      <div class="mt-sm text-h4 font-bold text-text-primary dark:text-dark-text">₹{{ stock_valuation|floatformat:2 }}</div>
+      <div class="text-caption text-text-secondary mt-xs">Total cost asset value</div>
+    </div>
+
+    {# Card 2: Low Stock Alerts #}
+    <div class="rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+      <div class="text-caption font-semibold uppercase tracking-wider text-text-secondary">Low Stock Alerts</div>
+      <div class="mt-sm text-h4 font-bold {% if low_stock_alerts_count > 0 %}text-danger{% else %}text-success{% endif %}">
+        {{ low_stock_alerts_count }}
+      </div>
+      <div class="text-caption text-text-secondary mt-xs">
+        <a href="{% url 'reporting:dashboard' %}?tab=inventory&inv_status=low" class="text-primary hover:underline font-medium">View items &rarr;</a>
+      </div>
+    </div>
+
+    {# Card 3: Monthly Sales #}
+    <div class="rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+      <div class="text-caption font-semibold uppercase tracking-wider text-text-secondary">Monthly Sales (MTD)</div>
+      <div class="mt-sm text-h4 font-bold text-success">₹{{ monthly_sales_revenue|floatformat:2 }}</div>
+      <div class="text-caption text-text-secondary mt-xs">Current calendar month</div>
+    </div>
+
+    {# Card 4: Monthly Purchases #}
+    <div class="rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+      <div class="text-caption font-semibold uppercase tracking-wider text-text-secondary">Monthly Purchases (MTD)</div>
+      <div class="mt-sm text-h4 font-bold text-info">₹{{ monthly_purchases_expense|floatformat:2 }}</div>
+      <div class="text-caption text-text-secondary mt-xs">Confirmed supply expenditure</div>
+    </div>
+  </div>
+
+  {# Row 2: Dynamic Visual Charts #}
+  <div class="grid gap-lg lg:grid-cols-3 mb-lg">
+    {# Chart 1: Monthly Trends (2/3 width) #}
+    <div class="lg:col-span-2 rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface flex flex-col justify-between">
+      <div class="mb-sm">
+        <h3 class="text-small font-bold text-text-primary dark:text-dark-text">Sales vs Purchases Trend</h3>
+        <p class="text-caption text-text-secondary">Last 6 months transactions revenue comparison</p>
+      </div>
+      <div class="h-64 w-full">
+        <canvas id="trendChart"></canvas>
+      </div>
+    </div>
+
+    {# Chart 2: Category Valuation (1/3 width) #}
+    <div class="lg:col-span-1 rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface flex flex-col justify-between">
+      <div class="mb-sm">
+        <h3 class="text-small font-bold text-text-primary dark:text-dark-text">Valuation by Category</h3>
+        <p class="text-caption text-text-secondary">Stock valuation cost distribution breakdown</p>
+      </div>
+      <div class="h-64 w-full flex items-center justify-center">
+        <canvas id="categoryChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  {# Row 3: Alert Lists & Timelines #}
+  <div class="grid gap-lg lg:grid-cols-2">
+    
+    {# Panel A: Low Stock Alerts #}
+    <div class="rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+      <div class="mb-md flex items-center justify-between border-b border-border dark:border-dark-border pb-sm">
+        <div>
+          <h3 class="text-small font-bold text-text-primary dark:text-dark-text">Stock Alerts</h3>
+          <p class="text-caption text-text-secondary">Items matching or below minimum thresholds</p>
+        </div>
+        <span class="inline-flex rounded-full bg-danger/10 px-sm py-0.5 text-caption font-bold text-danger">
+          ⚠️ Action required
+        </span>
+      </div>
+
+      <div class="flex flex-col divide-y divide-border dark:divide-dark-border">
+        {% for p in low_stock_products %}
+          <div class="py-sm flex items-center justify-between gap-md text-small">
+            <div>
+              <span class="font-semibold text-text-primary dark:text-dark-text">{{ p.name }}</span>
+              <div class="text-caption text-text-secondary">SKU: {{ p.sku }} &middot; Min: {{ p.minimum_stock }}</div>
+            </div>
+            <div class="flex items-center gap-sm">
+              <span class="font-bold text-danger">{{ p.current_stock }} {{ p.unit }}</span>
+              {% if "inventory.add_stockadjustment" in perms %}
+                <a
+                  href="{% url 'inventory:adjust_stock' %}?product={{ p.id }}"
+                  class="inline-flex h-8 items-center justify-center rounded-lg border border-border bg-surface px-sm text-caption font-semibold text-text-primary hover:bg-background transition-colors dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background"
+                >
+                  Adjust
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        {% empty %}
+          <div class="py-xl text-center text-text-secondary">
+            <span class="text-2xl">🎉</span>
+            <p class="text-caption font-semibold mt-sm">ALL PRODUCTS HEALTHY</p>
+            <p class="text-small">No stock levels are below minimum thresholds.</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# Panel B: Recent Stock Movements Ledger #}
+    <div class="rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+      <div class="mb-md flex items-center justify-between border-b border-border dark:border-dark-border pb-sm">
+        <div>
+          <h3 class="text-small font-bold text-text-primary dark:text-dark-text">Recent Ledger Activity</h3>
+          <p class="text-caption text-text-secondary">Latest logged inventory movement items</p>
+        </div>
+        <a href="{% url 'inventory:movement_list' %}" class="text-caption font-semibold text-primary hover:underline">
+          View full ledger &rarr;
+        </a>
+      </div>
+
+      <div class="flex flex-col divide-y divide-border dark:divide-dark-border">
+        {% for mv in recent_movements %}
+          <div class="py-sm flex items-center justify-between gap-md text-small">
+            <div>
+              <span class="font-semibold text-text-primary dark:text-dark-text">{{ mv.product.name }}</span>
+              <div class="text-caption text-text-secondary">
+                {{ mv.get_movement_type_display }} &middot; {{ mv.created_at|date:"d M H:i" }}
+              </div>
+            </div>
+            <span class="font-bold {% if mv.quantity > 0 %}text-success{% else %}text-danger{% endif %}">
+              {% if mv.quantity > 0 %}+{% endif %}{{ mv.quantity }}
+            </span>
+          </div>
+        {% empty %}
+          <div class="py-xl text-center text-text-secondary">
+            <p class="text-caption font-semibold">NO ACTIVITY RECORDED</p>
+            <p class="text-small">Record purchases or sales to populate activity feeds.</p>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+  {# Inline visual chart renderer #}
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Line/Bar Chart (Monthly trends)
+      const trendCtx = document.getElementById('trendChart').getContext('2d');
+      new Chart(trendCtx, {
+        type: 'line',
+        data: {
+          labels: {{ chart_months|safe }},
+          datasets: [
+            {
+              label: 'Sales Revenue (₹)',
+              data: {{ chart_sales|safe }},
+              borderColor: 'rgba(34, 197, 94, 1)', // success green
+              backgroundColor: 'rgba(34, 197, 94, 0.1)',
+              borderWidth: 2,
+              tension: 0.3,
+              fill: true
+            },
+            {
+              label: 'Purchases Cost (₹)',
+              data: {{ chart_purchases|safe }},
+              borderColor: 'rgba(59, 130, 246, 1)', // info blue
+              backgroundColor: 'rgba(59, 130, 246, 0.1)',
+              borderWidth: 2,
+              tension: 0.3,
+              fill: true
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                boxWidth: 12,
+                font: { family: 'Outfit, Inter, sans-serif', size: 11 }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              grid: { color: 'rgba(156, 163, 175, 0.1)' }
+            },
+            x: {
+              grid: { display: false }
+            }
+          }
+        }
+      });
+
+      // 2. Doughnut Chart (Category Cost distribution)
+      const catCtx = document.getElementById('categoryChart').getContext('2d');
+      new Chart(catCtx, {
+        type: 'doughnut',
+        data: {
+          labels: {{ chart_cat_labels|safe }},
+          datasets: [{
+            data: {{ chart_cat_vals|safe }},
+            backgroundColor: [
+              'rgba(99, 102, 241, 0.8)',  // Indigo
+              'rgba(236, 72, 153, 0.8)',  // Pink
+              'rgba(245, 158, 11, 0.8)',  // Amber
+              'rgba(14, 165, 233, 0.8)',  // Sky
+              'rgba(168, 85, 247, 0.8)',  // Purple
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'right',
+              labels: {
+                boxWidth: 8,
+                font: { family: 'Outfit, Inter, sans-serif', size: 10 }
+              }
+            }
+          }
+        }
+      });
+    });
+  </script>
+{% endblock %}

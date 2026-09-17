@@ -1,0 +1,20 @@
+{% comment %}
+  Single sidebar navigation entry.
+  Context: label (str), url (str), active (bool), disabled (bool).
+{% endcomment %}
+<li>
+  {% if disabled %}
+    <span
+      class="flex cursor-not-allowed items-center gap-3 rounded-md px-md py-2 text-small text-text-secondary/60"
+      aria-disabled="true"
+      >{{ label }}</span
+    >
+  {% else %}
+    <a
+      href="{{ url }}"
+      class="flex items-center gap-3 rounded-md px-md py-2 text-small transition-colors duration-150 {% if active %}border-l-2 border-primary bg-primary/5 font-semibold text-primary{% else %}text-text-secondary hover:bg-background hover:text-text-primary dark:hover:bg-dark-background{% endif %}"
+      {% if active %}aria-current="page"{% endif %}
+      >{{ label }}</a
+    >
+  {% endif %}
+</li>

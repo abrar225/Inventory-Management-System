@@ -1,0 +1,161 @@
+{% extends "base_app.html" %}
+
+{% block title %}{{ product.name }} — Product Details — IMS{% endblock %}
+
+{% block breadcrumb %}
+  <nav class="mb-sm text-caption text-text-secondary dark:text-dark-text" aria-label="Breadcrumb">
+    <ol class="inline-flex list-none p-0">
+      <li class="flex items-center">
+        <a href="{% url 'dashboard:index' %}" class="hover:text-primary">Dashboard</a>
+        <span class="mx-xs font-semibold">/</span>
+      </li>
+      <li class="flex items-center">
+        <a href="{% url 'catalog:product_list' %}" class="hover:text-primary">Products</a>
+        <span class="mx-xs font-semibold">/</span>
+      </li>
+      <li class="text-text-primary dark:text-dark-text font-medium" aria-current="page">{{ product.sku }}</li>
+    </ol>
+  </nav>
+{% endblock %}
+
+{% block content %}
+  {# Header block #}
+  <div class="mb-lg flex flex-col justify-between gap-md sm:flex-row sm:items-center">
+    <div>
+      <h1 class="text-heading-3 font-bold tracking-tight text-text-primary dark:text-dark-text">{{ product.name }}</h1>
+      <p class="text-small text-text-secondary">SKU: <strong class="font-mono text-text-primary dark:text-dark-text">{{ product.sku }}</strong></p>
+    </div>
+    <div class="flex gap-sm">
+      {% if "catalog.change_product" in perms %}
+        <a
+          href="{% url 'catalog:product_edit' product.pk %}"
+          class="inline-flex h-[44px] items-center justify-center rounded-xl bg-primary px-lg text-small font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/30"
+        >
+          Edit Product
+        </a>
+      {% endif %}
+      <a
+        href="{% url 'catalog:product_list' %}"
+        class="inline-flex h-[44px] items-center justify-center rounded-xl border border-border bg-surface px-lg text-small font-semibold text-text-primary hover:bg-background dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background"
+      >
+        Back to List
+      </a>
+    </div>
+  </div>
+
+  <div class="grid gap-lg lg:grid-cols-3">
+    {# Left Main Product Cards (spanning 2 cols) #}
+    <div class="lg:col-span-2 flex flex-col gap-lg">
+      
+      {# Product details card #}
+      <div class="rounded-3xl border border-border bg-surface p-lg shadow-card dark:border-dark-border dark:bg-dark-surface">
+        <h2 class="mb-md text-heading-4 font-bold text-text-primary dark:text-dark-text">General Information</h2>
+        
+        <div class="grid gap-md sm:grid-cols-2">
+          <div>
+            <span class="block text-caption font-medium text-text-secondary">Product Name</span>
+            <span class="text-body font-semibold text-text-primary dark:text-dark-text">{{ product.name }}</span>
+          </div>
+          <div>
+            <span class="block text-caption font-medium text-text-secondary">Barcode</span>
+            <span class="text-body font-semibold text-text-primary dark:text-dark-text">{{ product.barcode|default:"—" }}</span>
+          </div>
+          <div>
+            <span class="block text-caption font-medium text-text-secondary">Category</span>
+            <span class="text-body font-semibold text-text-primary dark:text-dark-text">{{ product.category.name }}</span>
+          </div>
+          <div>
+            <span class="block text-caption font-medium text-text-secondary">Supplier</span>
+            <span class="text-body font-semibold text-text-primary dark:text-dark-text">{{ product.supplier.company_name }}</span>
+          </div>
+        </div>
+
+        <div class="mt-lg border-t border-border pt-md dark:border-dark-border">
+          <span class="block text-caption font-medium text-text-secondary">Description</span>
+          <p class="text-small text-text-primary dark:text-dark-text leading-relaxed whitespace-pre-line">
+            {{ product.description|default:"No description provided." }}
+          </p>
+        </div>
+      </div>
+
+      {# Pricing details card #}
+      <div class="rounded-3xl border border-border bg-surface p-lg shadow-card dark:border-dark-border dark:bg-dark-surface">
+        <h2 class="mb-md text-heading-4 font-bold text-text-primary dark:text-dark-text">Pricing & Valuation</h2>
+        <div class="grid gap-md sm:grid-cols-3">
+          <div class="rounded-2xl bg-background p-md dark:bg-dark-background">
+            <span class="block text-caption font-medium text-text-secondary">Purchase Price</span>
+            <span class="text-heading-4 font-bold text-text-primary dark:text-dark-text">₹{{ product.purchase_price }}</span>
+          </div>
+          <div class="rounded-2xl bg-background p-md dark:bg-dark-background">
+            <span class="block text-caption font-medium text-text-secondary">Selling Price</span>
+            <span class="text-heading-4 font-bold text-text-primary dark:text-dark-text">₹{{ product.selling_price }}</span>
+          </div>
+          <div class="rounded-2xl bg-primary/5 p-md">
+            <span class="block text-caption font-medium text-primary">Profit Margin</span>
+            {% with markup=product.selling_price|dictsort:"purchase_price" %}
+              {# Just a simple visual markup calculation in local currency #}
+              <span class="text-heading-4 font-bold text-primary">
+                ₹{{ product.selling_price|default:0|add:product.purchase_price }}
+              </span>
+            {% endwith %}
+            <span class="block text-caption text-text-secondary">markup difference</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# Right Sidebar Column (1 col) #}
+    <div class="flex flex-col gap-lg">
+      
+      {# Product Image Card #}
+      <div class="rounded-3xl border border-border bg-surface p-lg shadow-card dark:border-dark-border dark:bg-dark-surface flex items-center justify-center">
+        <div class="w-full aspect-square overflow-hidden rounded-2xl border border-border bg-background dark:border-dark-border flex items-center justify-center">
+          {% if product.image %}
+            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="h-full w-full object-cover" />
+          {% else %}
+            <span class="text-6xl text-text-secondary">📦</span>
+          {% endif %}
+        </div>
+      </div>
+
+      {# Inventory Summary Card #}
+      <div class="rounded-3xl border border-border bg-surface p-lg shadow-card dark:border-dark-border dark:bg-dark-surface">
+        <h2 class="mb-md text-heading-4 font-bold text-text-primary dark:text-dark-text">Stock Level Summary</h2>
+        <div class="flex flex-col gap-md">
+          <div class="flex items-center justify-between border-b border-border pb-sm dark:border-dark-border">
+            <span class="text-small text-text-secondary">Current Stock</span>
+            <div class="flex items-baseline gap-xs">
+              <span class="text-heading-3 font-bold text-text-primary dark:text-dark-text">{{ product.current_stock }}</span>
+              <span class="text-caption text-text-secondary">{{ product.unit }}</span>
+            </div>
+          </div>
+          
+          <div class="flex items-center justify-between border-b border-border pb-sm dark:border-dark-border">
+            <span class="text-small text-text-secondary">Minimum Reorder Limit</span>
+            <div class="flex items-baseline gap-xs">
+              <span class="text-body font-semibold text-text-primary dark:text-dark-text">{{ product.minimum_stock }}</span>
+              <span class="text-caption text-text-secondary">{{ product.unit }}</span>
+            </div>
+          </div>
+
+          <div class="flex items-center justify-between">
+            <span class="text-small text-text-secondary">Stock Status</span>
+            {% if product.current_stock <= 0 %}
+              <span class="inline-flex items-center rounded-full bg-danger/10 px-sm py-xs text-caption font-semibold text-danger">
+                Out of Stock
+              </span>
+            {% elif product.is_low_stock %}
+              <span class="inline-flex items-center rounded-full bg-orange-500/10 px-sm py-xs text-caption font-semibold text-orange-500">
+                Low Stock Warning
+              </span>
+            {% else %}
+              <span class="inline-flex items-center rounded-full bg-success/10 px-sm py-xs text-caption font-semibold text-success">
+                In Stock
+              </span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

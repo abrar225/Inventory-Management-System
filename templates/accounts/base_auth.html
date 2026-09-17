@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% comment %}
+  Minimal centered layout for unauthenticated auth pages (login, password
+  reset). No sidebar or header — just a branded card on the app background.
+{% endcomment %}
+
+{% block body %}
+  <div class="flex min-h-full items-center justify-center px-lg py-2xl">
+    <div class="w-full max-w-md">
+      {# Brand #}
+      <div class="mb-xl flex items-center justify-center gap-2">
+        <span
+          class="inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary text-sm font-bold text-white"
+          >IMS</span
+        >
+        <span class="text-h4 font-semibold">Inventory</span>
+      </div>
+
+      <div
+        class="rounded-[20px] border border-border bg-surface p-xl shadow-card dark:border-dark-border dark:bg-dark-surface"
+      >
+        <div class="mb-lg">
+          <h1 class="text-h3 font-semibold">{% block auth_title %}{% endblock %}</h1>
+          {% block auth_subtitle %}{% endblock %}
+        </div>
+
+        {% include "accounts/partials/messages.html" %}
+
+        {% block auth_content %}{% endblock %}
+      </div>
+
+      {% block auth_footer %}{% endblock %}
+    </div>
+  </div>
+{% endblock %}

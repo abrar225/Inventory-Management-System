@@ -1,0 +1,5 @@
+# Production dependencies.
+-r base.txt
+
+# WSGI server for production deployment.
+gunicorn==23.*

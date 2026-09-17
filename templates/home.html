@@ -1,0 +1,29 @@
+{% extends "base_app.html" %}
+
+{% block title %}Dashboard · Inventory Management System{% endblock %}
+
+{% block page_header %}
+  <div class="mb-lg">
+    <h1 class="text-h3 font-semibold">Foundation ready</h1>
+    <p class="mt-1 text-small text-text-secondary">
+      Phase 1 is in place. Authentication and business modules arrive in the
+      following phases.
+    </p>
+  </div>
+{% endblock %}
+
+{% block content %}
+  <div
+    class="rounded-[20px] border border-border bg-surface p-lg shadow-card dark:border-dark-border dark:bg-dark-surface"
+  >
+    <h2 class="text-h4 font-semibold">Project foundation</h2>
+    <ul class="mt-md space-y-2 text-small text-text-secondary">
+      <li>✓ Settings split (base / dev / prod)</li>
+      <li>✓ PostgreSQL configured via environment</li>
+      <li>✓ Tailwind design tokens, dark mode, Inter typography</li>
+      <li>✓ HTMX &amp; Alpine.js wired</li>
+      <li>✓ Reusable BaseModel with UUID primary keys</li>
+      <li>✓ Base layout, app shell, and error pages</li>
+    </ul>
+  </div>
+{% endblock %}

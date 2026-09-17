@@ -1,0 +1,100 @@
+{% extends "base_app.html" %}
+
+{% block title %}{% if object %}Edit Product — {{ object.sku }}{% else %}New Product{% endif %} — IMS{% endblock %}
+
+{% block breadcrumb %}
+  <nav class="mb-sm text-caption text-text-secondary dark:text-dark-text" aria-label="Breadcrumb">
+    <ol class="inline-flex list-none p-0">
+      <li class="flex items-center">
+        <a href="{% url 'dashboard:index' %}" class="hover:text-primary">Dashboard</a>
+        <span class="mx-xs font-semibold">/</span>
+      </li>
+      <li class="flex items-center">
+        <a href="{% url 'catalog:product_list' %}" class="hover:text-primary">Products</a>
+        <span class="mx-xs font-semibold">/</span>
+      </li>
+      <li class="text-text-primary dark:text-dark-text font-medium" aria-current="page">
+        {% if object %}Edit{% else %}New{% endif %}
+      </li>
+    </ol>
+  </nav>
+{% endblock %}
+
+{% block content %}
+  <div class="max-w-3xl mx-auto rounded-3xl border border-border bg-surface p-lg shadow-card dark:border-dark-border dark:bg-dark-surface">
+    <h2 class="mb-lg text-heading-4 font-bold text-text-primary dark:text-dark-text">
+      {% if object %}Edit Product ({{ object.sku }}){% else %}Create Product{% endif %}
+    </h2>
+
+    <form method="post" enctype="multipart/form-data" novalidate>
+      {% csrf_token %}
+
+      <div class="grid gap-x-lg sm:grid-cols-2">
+        {% include "accounts/partials/field.html" with field=form.name %}
+        {% include "accounts/partials/field.html" with field=form.sku %}
+      </div>
+
+      <div class="grid gap-x-lg sm:grid-cols-2">
+        {% include "accounts/partials/field.html" with field=form.barcode %}
+        {% include "accounts/partials/field.html" with field=form.unit %}
+      </div>
+
+      <div class="grid gap-x-lg sm:grid-cols-2">
+        {% include "accounts/partials/field.html" with field=form.category %}
+        {% include "accounts/partials/field.html" with field=form.supplier %}
+      </div>
+
+      <div class="border-t border-border my-md pt-md dark:border-dark-border">
+        <h3 class="mb-md text-small font-semibold uppercase tracking-wider text-text-secondary">Pricing & Inventory</h3>
+        
+        <div class="grid gap-x-lg sm:grid-cols-3 items-end">
+          {% include "accounts/partials/field.html" with field=form.purchase_price %}
+          {% include "accounts/partials/field.html" with field=form.selling_price %}
+          {% include "accounts/partials/field.html" with field=form.minimum_stock %}
+        </div>
+      </div>
+
+      <div class="border-t border-border my-md pt-md dark:border-dark-border">
+        <h3 class="mb-md text-small font-semibold uppercase tracking-wider text-text-secondary">Media & Description</h3>
+        
+        {% include "accounts/partials/field.html" with field=form.image %}
+        
+        {% if object.image %}
+          <div class="mb-md flex items-center gap-md">
+            <span class="text-caption text-text-secondary">Current Image:</span>
+            <div class="h-16 w-16 overflow-hidden rounded-lg border border-border dark:border-dark-border">
+              <img src="{{ object.image.url }}" alt="{{ object.name }}" class="h-full w-full object-cover" />
+            </div>
+          </div>
+        {% endif %}
+
+        {% include "accounts/partials/field.html" with field=form.description %}
+      </div>
+
+      <div class="border-t border-border my-md pt-md dark:border-dark-border">
+        <label class="flex items-center gap-sm cursor-pointer select-none">
+          {{ form.is_active }}
+          <span class="text-small font-medium text-text-primary dark:text-dark-text">Available/Active Status</span>
+        </label>
+        {% for error in form.is_active.errors %}
+          <p class="mt-1 text-caption text-danger">{{ error }}</p>
+        {% endfor %}
+      </div>
+
+      <div class="mt-lg flex items-center gap-sm">
+        <button
+          type="submit"
+          class="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-lg text-small font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/30"
+        >
+          {% if object %}Save Changes{% else %}Create Product{% endif %}
+        </button>
+        <a
+          href="{% url 'catalog:product_list' %}"
+          class="inline-flex h-11 items-center justify-center rounded-xl border border-border bg-surface px-lg text-small font-semibold text-text-primary hover:bg-background dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background"
+        >
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

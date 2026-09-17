@@ -1,0 +1,165 @@
+{% extends "base_app.html" %}
+{% load static %}
+
+{% block title %}Sales Invoices — IMS{% endblock %}
+
+{% block breadcrumb %}
+  <nav class="mb-sm text-caption text-text-secondary dark:text-dark-text" aria-label="Breadcrumb">
+    <ol class="inline-flex list-none p-0">
+      <li class="flex items-center">
+        <a href="{% url 'dashboard:index' %}" class="hover:text-primary">Dashboard</a>
+        <span class="mx-xs font-semibold">/</span>
+      </li>
+      <li class="text-text-primary dark:text-dark-text font-medium" aria-current="page">Sales</li>
+    </ol>
+  </nav>
+{% endblock %}
+
+{% block content %}
+  {# Header block #}
+  <div class="mb-lg flex flex-col justify-between gap-md sm:flex-row sm:items-center">
+    <div>
+      <h1 class="text-h3 font-bold tracking-tight text-text-primary dark:text-dark-text">Sales Invoices</h1>
+      <p class="text-small text-text-secondary">Process customer transactions, record outward sales, and track invoices.</p>
+    </div>
+    {% if "sales.add_sale" in perms %}
+      <a
+        href="{% url 'sales:sale_add' %}"
+        class="inline-flex h-[44px] items-center justify-center rounded-xl bg-primary px-lg text-small font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/30"
+      >
+        Record New Sale
+      </a>
+    {% endif %}
+  </div>
+
+  {# Search and Filters #}
+  <div class="mb-md rounded-2xl border border-border bg-surface p-md shadow-card dark:border-dark-border dark:bg-dark-surface">
+    <form method="get" action="{% url 'sales:sale_list' %}" class="flex flex-col gap-md">
+      <div class="flex flex-col gap-sm md:flex-row">
+        {# Search Input #}
+        <div class="relative flex-1">
+          <input
+            type="search"
+            name="q"
+            value="{{ q }}"
+            placeholder="Search by Invoice number..."
+            class="h-11 w-full rounded-xl border border-border bg-background pl-[44px] pr-md text-small text-text-primary placeholder:text-text-secondary focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/30 dark:border-dark-border dark:bg-dark-background dark:text-dark-text"
+          />
+          <div class="pointer-events-none absolute inset-y-0 left-md flex items-center text-text-secondary">
+            <span>🔍</span>
+          </div>
+        </div>
+
+        {# Action Buttons #}
+        <div class="flex gap-sm">
+          <button
+            type="submit"
+            class="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-md text-small font-semibold text-white transition-colors duration-150 hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/30"
+          >
+            Search
+          </button>
+          {% if q %}
+            <a
+              href="{% url 'sales:sale_list' %}"
+              class="inline-flex h-11 items-center justify-center rounded-xl border border-border bg-surface px-md text-small font-semibold text-text-primary hover:bg-background dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background"
+            >
+              Clear
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    </form>
+  </div>
+
+  {# Invoices Table #}
+  <div class="rounded-2xl border border-border bg-surface shadow-card dark:border-dark-border dark:bg-dark-surface overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="w-full text-left border-collapse">
+        <thead>
+          <tr class="border-b border-border bg-background/40 text-caption font-semibold uppercase tracking-wider text-text-secondary dark:border-dark-border">
+            <th class="px-md py-md">Invoice Info</th>
+            <th class="px-md py-md">Customer Name</th>
+            <th class="px-md py-md">Sale Date</th>
+            <th class="px-md py-md text-right">Grand Total</th>
+            <th class="px-md py-md text-center">Status</th>
+            <th class="px-md py-md text-center">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-border dark:divide-dark-border text-small">
+          {% for sale in sales %}
+            <tr class="hover:bg-background/20 dark:hover:bg-dark-background/20">
+              <td class="px-md py-md">
+                <a href="{% url 'sales:sale_detail' sale.pk %}" class="font-bold text-primary hover:underline">
+                  {{ sale.invoice_number }}
+                </a>
+                <div class="text-caption text-text-secondary">Created by {{ sale.created_by.username|default:"System" }}</div>
+              </td>
+              <td class="px-md py-md font-semibold text-text-primary dark:text-dark-text">
+                {{ sale.customer_name }}
+              </td>
+              <td class="px-md py-md text-text-secondary font-medium">
+                {{ sale.sale_date|date:"d M Y" }}
+              </td>
+              <td class="px-md py-md text-right font-bold text-text-primary dark:text-dark-text">
+                ₹{{ sale.grand_total|floatformat:2 }}
+              </td>
+              <td class="px-md py-md text-center">
+                {% if sale.status == "Completed" %}
+                  <span class="inline-flex items-center rounded-full bg-success/10 px-sm py-0.5 text-caption font-bold text-success">
+                    ✅ Completed
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center rounded-full bg-danger/10 px-sm py-0.5 text-caption font-bold text-danger">
+                    ❌ Cancelled
+                  </span>
+                {% endif %}
+              </td>
+              <td class="px-md py-md text-center">
+                <a
+                  href="{% url 'sales:sale_detail' sale.pk %}"
+                  class="inline-flex h-[32px] items-center justify-center rounded-lg border border-border px-sm text-caption font-semibold hover:bg-background transition-colors dark:border-dark-border dark:hover:bg-dark-background"
+                >
+                  Invoice
+                </a>
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" class="px-md py-xl text-center text-text-secondary">
+                <div class="text-caption uppercase font-semibold">No invoices found</div>
+                <div class="mt-sm text-small">Create a new sale transaction or edit your query parameters.</div>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {# Pagination #}
+    {% if is_paginated %}
+      <div class="border-t border-border px-md py-md flex items-center justify-between dark:border-dark-border bg-background/20">
+        <span class="text-caption text-text-secondary">
+          Page {{ page_obj.number }} of {{ paginator.num_pages }}
+        </span>
+        <div class="flex gap-sm">
+          {% if page_obj.has_previous %}
+            <a
+              href="?page={{ page_obj.previous_page_number }}{% if q %}&q={{ q }}{% endif %}"
+              class="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-surface px-md text-caption font-semibold text-text-primary hover:bg-background dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background"
+            >
+              Previous
+            </a>
+          {% endif %}
+          {% if page_obj.has_next %}
+            <a
+              href="?page={{ page_obj.next_page_number }}{% if q %}&q={{ q }}{% endif %}"
+              class="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-surface px-md text-caption font-semibold text-text-primary hover:bg-background dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background"
+            >
+              Next
+            </a>
+          {% endif %}
+        </div>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

@@ -1,0 +1,122 @@
+@import "tailwindcss";
+
+/* Scan Django templates and JS for utility classes (templates live outside
+ * this directory, so declare the sources explicitly). */
+@source "../../templates";
+@source "../../apps";
+@source "../js";
+
+/*
+ * Design tokens for the Inventory Management System.
+ * Values come directly from the Frontend Design System document:
+ * colors (§8–9), spacing (§6), border radius (§7), and typography (§10).
+ * Dark mode is class-based (toggled on <html class="dark">).
+ */
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* ---- Colors: brand & surfaces (light) ---- */
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
+  --color-background: #f8fafc;
+  --color-surface: #ffffff;
+  --color-sidebar: #ffffff;
+
+  /* ---- Text ---- */
+  --color-text-primary: #0f172a;
+  --color-text-secondary: #475569;
+
+  /* ---- Borders ---- */
+  --color-border: #e2e8f0;
+
+  /* ---- Status ---- */
+  --color-success: #059669;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-info: #2563eb;
+  --color-low-stock: #f97316;
+  --color-out-of-stock: #ef4444;
+
+  /* ---- Dark mode surfaces & text ---- */
+  --color-dark-background: #0f172a;
+  --color-dark-surface: #1e293b;
+  --color-dark-text: #f8fafc;
+  --color-dark-border: #334155;
+
+  /* ---- Typography ---- */
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto,
+    sans-serif;
+
+  --text-h1: 40px;
+  --text-h1--line-height: 1.5;
+  --text-h1--font-weight: 700;
+  --text-h2: 32px;
+  --text-h2--line-height: 1.5;
+  --text-h2--font-weight: 700;
+  --text-h3: 24px;
+  --text-h3--line-height: 1.5;
+  --text-h3--font-weight: 600;
+  --text-h4: 20px;
+  --text-h4--line-height: 1.5;
+  --text-h4--font-weight: 600;
+  --text-body-lg: 18px;
+  --text-body-lg--line-height: 1.5;
+  --text-body: 16px;
+  --text-body--line-height: 1.5;
+  --text-small: 14px;
+  --text-small--line-height: 1.5;
+  --text-caption: 12px;
+  --text-caption--line-height: 1.5;
+
+  /* ---- Spacing: strict 8-point scale (§6) ---- */
+  --spacing-xs: 4px;
+  --spacing-sm: 8px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+  --spacing-2xl: 48px;
+  --spacing-3xl: 64px;
+  --spacing-4xl: 96px;
+
+  /* ---- Max Widths (to prevent collision with custom spacing scale) ---- */
+  --max-width-xs: 20rem;
+  --max-width-sm: 24rem;
+  --max-width-md: 28rem;
+  --max-width-lg: 32rem;
+  --max-width-xl: 36rem;
+  --max-width-2xl: 42rem;
+  --max-width-3xl: 48rem;
+  --max-width-4xl: 56rem;
+  --max-width-5xl: 64rem;
+  --max-width-6xl: 72rem;
+  --max-width-7xl: 80rem;
+
+  /* ---- Border radius (§7) ---- */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 24px;
+
+  /* ---- Shadow (§8 card shadow) ---- */
+  --shadow-card: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+
+/* Base element defaults */
+@layer base {
+  html {
+    font-family: var(--font-sans);
+  }
+
+  body {
+    font-size: var(--text-body);
+    line-height: 1.5;
+  }
+
+  /* Always show a visible focus ring for keyboard users (§29 accessibility). */
+  :focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}

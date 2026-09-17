@@ -1,0 +1,176 @@
+{% extends "base_app.html" %}
+
+{% block title %}New Purchase Order — IMS{% endblock %}
+
+{% block breadcrumb %}
+  <nav class="mb-sm text-caption text-text-secondary dark:text-dark-text" aria-label="Breadcrumb">
+    <ol class="inline-flex list-none p-0">
+      <li class="flex items-center">
+        <a href="{% url 'dashboard:index' %}" class="hover:text-primary">Dashboard</a>
+        <span class="mx-xs font-semibold">/</span>
+      </li>
+      <li class="flex items-center">
+        <a href="{% url 'purchasing:purchase_list' %}" class="hover:text-primary">Purchases</a>
+        <span class="mx-xs font-semibold">/</span>
+      </li>
+      <li class="text-text-primary dark:text-dark-text font-medium" aria-current="page">New PO</li>
+    </ol>
+  </nav>
+{% endblock %}
+
+{% block content %}
+  <div class="max-w-3xl mx-auto rounded-3xl border border-border bg-surface p-lg shadow-card dark:border-dark-border dark:bg-dark-surface" x-data="formset()">
+    <h2 class="mb-lg text-h4 font-bold text-text-primary dark:text-dark-text">
+      Create Purchase Order
+    </h2>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      {# Non-field errors #}
+      {% if form.non_field_errors %}
+        <div class="mb-md rounded-xl border border-danger/30 bg-danger/10 px-md py-3 text-small text-danger font-medium">
+          {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+        </div>
+      {% endif %}
+
+      {# Header Details #}
+      <div class="grid gap-x-lg sm:grid-cols-2">
+        {% include "accounts/partials/field.html" with field=form.supplier %}
+        {% include "accounts/partials/field.html" with field=form.purchase_date %}
+      </div>
+
+      {# Spacing & Totals #}
+      <div class="grid gap-x-lg sm:grid-cols-2">
+        {% include "accounts/partials/field.html" with field=form.tax %}
+        {% include "accounts/partials/field.html" with field=form.discount %}
+      </div>
+
+      {% include "accounts/partials/field.html" with field=form.notes %}
+
+      {# Dynamic Line Items Formset #}
+      <div class="border-t border-border mt-lg pt-lg dark:border-dark-border">
+        <div class="flex items-center justify-between mb-md">
+          <h3 class="text-small font-semibold uppercase tracking-wider text-text-secondary">Line Items</h3>
+          <button
+            type="button"
+            @click="addRow"
+            class="inline-flex h-9 items-center justify-center rounded-lg bg-primary/10 px-md text-caption font-semibold text-primary hover:bg-primary/20 transition-colors"
+          >
+            + Add Product Row
+          </button>
+        </div>
+
+        {# Management Form inputs #}
+        {{ formset.management_form }}
+
+        {# Formset Container #}
+        <div id="formset-container" class="flex flex-col gap-sm">
+          {% for item_form in formset %}
+            <div class="formset-row grid gap-x-md sm:grid-cols-3 items-end border-b border-border dark:border-dark-border pb-md mb-md relative" data-index="{{ forloop.counter0 }}">
+              {{ item_form.id }}
+              
+              {# Render form inputs #}
+              <div class="sm:col-span-1">
+                {% include "accounts/partials/field.html" with field=item_form.product %}
+              </div>
+              <div class="sm:col-span-1">
+                {% include "accounts/partials/field.html" with field=item_form.quantity %}
+              </div>
+              <div class="sm:col-span-1 flex items-end gap-sm">
+                <div class="flex-1">
+                  {% include "accounts/partials/field.html" with field=item_form.unit_price %}
+                </div>
+                {% if forloop.counter0 > 0 %}
+                  <button
+                    type="button"
+                    @click="removeRow($el)"
+                    class="h-12 w-12 flex items-center justify-center rounded-xl bg-danger/10 text-danger hover:bg-danger/20 transition-colors mb-md"
+                  >
+                    🗑️
+                  </button>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      {# Hidden empty form template #}
+      <div id="empty-row-template" class="hidden">
+        <div class="sm:col-span-1">
+          {% include "accounts/partials/field.html" with field=formset.empty_form.product %}
+        </div>
+        <div class="sm:col-span-1">
+          {% include "accounts/partials/field.html" with field=formset.empty_form.quantity %}
+        </div>
+        <div class="sm:col-span-1 flex items-end gap-sm">
+          <div class="flex-1">
+            {% include "accounts/partials/field.html" with field=formset.empty_form.unit_price %}
+          </div>
+          <button
+            type="button"
+            @click="removeRow($el)"
+            class="h-12 w-12 flex items-center justify-center rounded-xl bg-danger/10 text-danger hover:bg-danger/20 transition-colors mb-md"
+          >
+            🗑️
+          </button>
+        </div>
+      </div>
+
+      {# Footer #}
+      <div class="border-t border-border mt-lg pt-lg flex justify-end gap-sm dark:border-dark-border">
+        <a
+          href="{% url 'purchasing:purchase_list' %}"
+          class="inline-flex h-11 items-center justify-center rounded-xl border border-border bg-surface px-lg text-small font-semibold text-text-primary hover:bg-background dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background"
+        >
+          Cancel
+        </a>
+        <button
+          type="submit"
+          class="inline-flex h-11 items-center justify-center rounded-xl bg-primary px-lg text-small font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary/30"
+        >
+          Save Order
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {# Formset Handler Script #}
+  <script>
+    function formset() {
+      return {
+        totalForms: 0,
+        init() {
+          this.totalForms = parseInt(document.getElementById('id_items-TOTAL_FORMS').value);
+        },
+        addRow() {
+          const template = document.getElementById('empty-row-template').innerHTML;
+          const newIndex = this.totalForms;
+          const newRowHtml = template.replace(/__prefix__/g, newIndex);
+
+          const container = document.getElementById('formset-container');
+          const newRowDiv = document.createElement('div');
+          newRowDiv.className = 'formset-row grid gap-x-md sm:grid-cols-3 items-end border-b border-border dark:border-dark-border pb-md mb-md relative';
+          newRowDiv.setAttribute('data-index', newIndex);
+          newRowDiv.innerHTML = newRowHtml;
+
+          container.appendChild(newRowDiv);
+
+          this.totalForms++;
+          document.getElementById('id_items-TOTAL_FORMS').value = this.totalForms;
+        },
+        removeRow(element) {
+          const row = element.closest('.formset-row');
+          const deleteInput = row.querySelector('input[name$="-DELETE"]');
+          if (deleteInput) {
+            deleteInput.checked = true;
+            row.style.display = 'none';
+          } else {
+            row.remove();
+          }
+        }
+      };
+    }
+  </script>
+{% endblock %}

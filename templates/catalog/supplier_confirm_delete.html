@@ -1,0 +1,48 @@
+{% extends "base_app.html" %}
+
+{% block title %}Delete Supplier — {{ object.company_name }} — IMS{% endblock %}
+
+{% block breadcrumb %}
+  <nav class="mb-sm text-caption text-text-secondary dark:text-dark-text" aria-label="Breadcrumb">
+    <ol class="inline-flex list-none p-0">
+      <li class="flex items-center">
+        <a href="{% url 'dashboard:index' %}" class="hover:text-primary">Dashboard</a>
+        <span class="mx-xs font-semibold">/</span>
+      </li>
+      <li class="flex items-center">
+        <a href="{% url 'catalog:supplier_list' %}" class="hover:text-primary">Suppliers</a>
+        <span class="mx-xs font-semibold">/</span>
+      </li>
+      <li class="text-text-primary dark:text-dark-text font-medium" aria-current="page">Delete</li>
+    </ol>
+  </nav>
+{% endblock %}
+
+{% block content %}
+  <div class="max-w-md mx-auto rounded-3xl border border-danger/30 bg-surface p-lg shadow-card dark:bg-dark-surface">
+    <div class="mb-md text-center text-4xl text-danger">⚠️</div>
+    <h2 class="mb-sm text-center text-heading-4 font-bold text-text-primary dark:text-dark-text">Delete Supplier</h2>
+    <p class="mb-lg text-center text-small text-text-secondary">
+      Are you sure you want to delete the supplier <strong class="text-text-primary dark:text-dark-text">"{{ object.company_name }}"</strong>?
+      Products tied to this supplier will remain, but you will not be able to create new purchases from this supplier.
+    </p>
+
+    <form method="post">
+      {% csrf_token %}
+      <div class="flex flex-col gap-sm">
+        <button
+          type="submit"
+          class="inline-flex h-11 w-full items-center justify-center rounded-xl bg-danger px-lg text-small font-semibold text-white shadow-sm transition-colors duration-150 hover:bg-danger/90 focus:outline-none focus:ring-2 focus:ring-danger/30"
+        >
+          Confirm Delete
+        </button>
+        <a
+          href="{% url 'catalog:supplier_list' %}"
+          class="inline-flex h-11 w-full items-center justify-center rounded-xl border border-border bg-surface px-lg text-small font-semibold text-text-primary hover:bg-background dark:border-dark-border dark:bg-dark-surface dark:text-dark-text dark:hover:bg-dark-background"
+        >
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+{% endblock %}

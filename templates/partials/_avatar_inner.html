@@ -1,0 +1,17 @@
+{% comment %}
+  Internal avatar renderer. Context: user, dim (size classes).
+  Not included directly — use partials/avatar.html.
+{% endcomment %}
+{% if user.avatar %}
+  <img
+    src="{{ user.avatar.url }}"
+    alt="{{ user.get_full_name|default:user.email }}"
+    class="{{ dim }} rounded-full object-cover"
+  />
+{% else %}
+  <span
+    class="{{ dim }} inline-flex items-center justify-center rounded-full bg-primary/10 font-semibold uppercase text-primary"
+    aria-hidden="true"
+    >{{ user.first_name|first }}{{ user.last_name|first|default:user.email|first }}</span
+  >
+{% endif %}

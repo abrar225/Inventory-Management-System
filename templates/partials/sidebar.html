@@ -1,0 +1,105 @@
+{% comment %}
+  Sidebar navigation. Links activate as their modules land in later phases;
+  entries whose views don't exist yet are shown disabled. Permission-based
+  visibility: Users and Audit Logs are Administrator-only.
+{% endcomment %}
+<div class="flex h-full flex-col">
+  {# Brand #}
+  <div class="flex h-[72px] items-center border-b border-border px-lg dark:border-dark-border">
+    <a href="{% url 'dashboard:index' %}" class="flex items-center gap-2">
+      <span
+        class="inline-flex h-8 w-8 items-center justify-center rounded-md bg-primary text-sm font-bold text-white"
+        >IMS</span
+      >
+      <span class="text-body font-semibold">Inventory</span>
+    </a>
+  </div>
+
+  {# Navigation #}
+  <nav class="flex-1 overflow-y-auto px-sm py-md" aria-label="Main navigation">
+    <ul class="flex flex-col gap-1">
+      {% if request.resolver_match.app_name == "dashboard" %}
+        {% include "partials/sidebar_link.html" with label="Dashboard" url="/dashboard/" active=True %}
+      {% else %}
+        {% include "partials/sidebar_link.html" with label="Dashboard" url="/dashboard/" active=False %}
+      {% endif %}
+
+      {% if request.resolver_match.app_name == "catalog" and "product" in request.resolver_match.url_name %}
+        {% include "partials/sidebar_link.html" with label="Products" url="/catalog/products/" active=True %}
+      {% else %}
+        {% include "partials/sidebar_link.html" with label="Products" url="/catalog/products/" active=False %}
+      {% endif %}
+
+      {% if request.resolver_match.app_name == "catalog" and "category" in request.resolver_match.url_name %}
+        {% include "partials/sidebar_link.html" with label="Categories" url="/catalog/categories/" active=True %}
+      {% else %}
+        {% include "partials/sidebar_link.html" with label="Categories" url="/catalog/categories/" active=False %}
+      {% endif %}
+
+      {% if request.resolver_match.app_name == "catalog" and "supplier" in request.resolver_match.url_name %}
+        {% include "partials/sidebar_link.html" with label="Suppliers" url="/catalog/suppliers/" active=True %}
+      {% else %}
+        {% include "partials/sidebar_link.html" with label="Suppliers" url="/catalog/suppliers/" active=False %}
+      {% endif %}
+
+      {% if request.resolver_match.app_name == "inventory" %}
+        {% include "partials/sidebar_link.html" with label="Inventory" url="/inventory/" active=True %}
+      {% else %}
+        {% include "partials/sidebar_link.html" with label="Inventory" url="/inventory/" active=False %}
+      {% endif %}
+
+      {% if request.resolver_match.app_name == "purchasing" %}
+        {% include "partials/sidebar_link.html" with label="Purchases" url="/purchasing/" active=True %}
+      {% else %}
+        {% include "partials/sidebar_link.html" with label="Purchases" url="/purchasing/" active=False %}
+      {% endif %}
+
+      {% if request.resolver_match.app_name == "sales" %}
+        {% include "partials/sidebar_link.html" with label="Sales" url="/sales/" active=True %}
+      {% else %}
+        {% include "partials/sidebar_link.html" with label="Sales" url="/sales/" active=False %}
+      {% endif %}
+
+      {% if request.resolver_match.app_name == "reporting" %}
+        {% include "partials/sidebar_link.html" with label="Reports" url="/reports/" active=True %}
+      {% else %}
+        {% include "partials/sidebar_link.html" with label="Reports" url="/reports/" active=False %}
+      {% endif %}
+
+      {% if request.user.is_administrator %}
+        <li class="mt-md px-md text-caption font-medium uppercase tracking-wide text-text-secondary">
+          Administration
+        </li>
+        {% if request.resolver_match.view_name == "accounts:user_list" or request.resolver_match.view_name == "accounts:user_add" or request.resolver_match.view_name == "accounts:user_update" %}
+          {% include "partials/sidebar_link.html" with label="Users" url="/accounts/users/" active=True %}
+        {% else %}
+          {% include "partials/sidebar_link.html" with label="Users" url="/accounts/users/" active=False %}
+        {% endif %}
+
+        {% if request.resolver_match.app_name == "audit" %}
+          {% include "partials/sidebar_link.html" with label="Audit Logs" url="/audit/" active=True %}
+        {% else %}
+          {% include "partials/sidebar_link.html" with label="Audit Logs" url="/audit/" active=False %}
+        {% endif %}
+      {% endif %}
+    </ul>
+  </nav>
+
+  {# Account footer #}
+  <div class="border-t border-border p-sm dark:border-dark-border">
+    <ul class="flex flex-col gap-1">
+      {% include "partials/sidebar_link.html" with label="Profile" url="/accounts/profile/" active=False %}
+      <li>
+        <form method="post" action="{% url 'accounts:logout' %}">
+          {% csrf_token %}
+          <button
+            type="submit"
+            class="flex w-full items-center gap-3 rounded-md px-md py-2 text-left text-small text-text-secondary transition-colors duration-150 hover:bg-background hover:text-text-primary dark:hover:bg-dark-background"
+          >
+            Logout
+          </button>
+        </form>
+      </li>
+    </ul>
+  </div>
+</div>

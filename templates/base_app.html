@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% comment %}
+  Authenticated application shell: fixed header (72px), fixed sidebar (280px),
+  and a centered content column (max 1600px) following the Frontend Design
+  System. Business pages extend this template and fill the page blocks.
+{% endcomment %}
+
+{% block body %}
+  <div x-data="{ sidebarOpen: false }" class="flex h-full">
+    {# ---- Sidebar (280px, fixed on desktop, drawer on mobile) ---- #}
+    <aside
+      class="fixed inset-y-0 left-0 z-40 w-[280px] transform border-r border-border bg-surface transition-transform duration-200 ease-out dark:border-dark-border dark:bg-dark-surface lg:translate-x-0"
+      :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'"
+    >
+      {% include "partials/sidebar.html" %}
+    </aside>
+
+    {# ---- Mobile backdrop ---- #}
+    <div
+      x-show="sidebarOpen"
+      x-transition.opacity
+      @click="sidebarOpen = false"
+      class="fixed inset-0 z-30 bg-black/40 lg:hidden"
+      style="display: none;"
+    ></div>
+
+    {# ---- Main column ---- #}
+    <div class="flex min-h-full w-full flex-col lg:pl-[280px]">
+      <header
+        class="sticky top-0 z-20 flex h-[72px] items-center gap-4 border-b border-border bg-surface px-lg dark:border-dark-border dark:bg-dark-surface"
+      >
+        <button
+          type="button"
+          @click="sidebarOpen = !sidebarOpen"
+          class="inline-flex h-10 w-10 items-center justify-center rounded-md text-text-secondary hover:bg-background lg:hidden dark:hover:bg-dark-background"
+          aria-label="Toggle navigation"
+        >
+          <span aria-hidden="true">&#9776;</span>
+        </button>
+        {% include "partials/header.html" %}
+      </header>
+
+      <main class="mx-auto w-full max-w-[1600px] flex-1 px-lg py-lg">
+        {% block breadcrumb %}{% endblock %}
+        {% block page_header %}{% endblock %}
+        {% block content %}{% endblock %}
+      </main>
+
+      <footer
+        class="border-t border-border px-lg py-md text-caption text-text-secondary dark:border-dark-border"
+      >
+        {% include "partials/footer.html" %}
+      </footer>
+    </div>
+  </div>
+{% endblock %}

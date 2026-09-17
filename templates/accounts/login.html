@@ -1,0 +1,53 @@
+{% extends "accounts/base_auth.html" %}
+
+{% block title %}Sign in · Inventory Management System{% endblock %}
+{% block auth_title %}Sign in{% endblock %}
+{% block auth_subtitle %}
+  <p class="mt-1 text-small text-text-secondary">
+    Welcome back. Enter your credentials to continue.
+  </p>
+{% endblock %}
+
+{% block auth_content %}
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    {# Non-field errors (e.g. invalid login, disabled account) shown inline. #}
+    {% if form.non_field_errors %}
+      <div
+        role="alert"
+        class="mb-md rounded-md border border-danger/30 bg-danger/10 px-md py-2 text-small text-danger"
+      >
+        {% for error in form.non_field_errors %}{{ error }}{% endfor %}
+      </div>
+    {% endif %}
+
+    {% include "accounts/partials/field.html" with field=form.username %}
+    {% include "accounts/partials/field.html" with field=form.password %}
+
+    <input type="hidden" name="next" value="{{ next }}" />
+
+    <div class="mb-md flex items-center justify-between">
+      <label class="flex items-center gap-2 text-small text-text-secondary">
+        <input
+          type="checkbox"
+          name="remember_me"
+          class="h-4 w-4 rounded border-border text-primary focus:ring-primary/30"
+        />
+        Remember me
+      </label>
+      <a
+        href="{% url 'accounts:password_reset' %}"
+        class="text-small font-medium text-primary hover:text-primary-hover"
+        >Forgot password?</a
+      >
+    </div>
+
+    <button
+      type="submit"
+      class="inline-flex h-11 w-full items-center justify-center rounded-xl bg-primary px-lg text-small font-medium text-white transition-colors duration-150 hover:bg-primary-hover"
+    >
+      Sign in
+    </button>
+  </form>
+{% endblock %}

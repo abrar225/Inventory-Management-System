@@ -1,0 +1,21 @@
+{
+  "name": "inventory-management-system",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Frontend build tooling (Tailwind CSS) for the IMS.",
+  "scripts": {
+    "build:css": "tailwindcss -i ./static/css/input.css -o ./static/css/app.css --minify",
+    "watch:css": "tailwindcss -i ./static/css/input.css -o ./static/css/app.css --watch",
+    "vendor:js": "node scripts/vendor-js.mjs",
+    "build": "npm run vendor:js && npm run build:css",
+    "postinstall": "node scripts/vendor-js.mjs"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.0.0",
+    "tailwindcss": "^4.0.0"
+  },
+  "dependencies": {
+    "alpinejs": "^3.14.0",
+    "htmx.org": "^2.0.0"
+  }
+}

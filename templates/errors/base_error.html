@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% comment %}Shared minimal layout for error pages (403/404/500).{% endcomment %}
+
+{% block body %}
+  <div class="flex min-h-full items-center justify-center px-lg">
+    <div class="w-full max-w-md text-center">
+      <p class="text-h1 font-bold text-primary">{% block error_code %}{% endblock %}</p>
+      <h1 class="mt-sm text-h3 font-semibold">{% block error_title %}{% endblock %}</h1>
+      <p class="mt-sm text-body text-text-secondary">
+        {% block error_message %}{% endblock %}
+      </p>
+      <div class="mt-lg flex items-center justify-center gap-3">
+        {% block error_actions %}
+          <a
+            href="/"
+            class="inline-flex h-11 items-center rounded-xl bg-primary px-lg text-small font-medium text-white transition-colors duration-150 hover:bg-primary-hover"
+            >Back to Dashboard</a
+          >
+        {% endblock %}
+      </div>
+    </div>
+  </div>
+{% endblock %}
